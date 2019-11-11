@@ -12662,7 +12662,8 @@ SDValue DAGCombiner::visitFSQRT(SDNode *N) {
 
 /// copysign(x, fp_extend(y)) -> copysign(x, y)
 /// copysign(x, fp_round(y)) -> copysign(x, y)
-static inline bool CanCombineFCOPYSIGN_EXTEND_ROUND(SDNode *N) {
+static inline bool CanCombineFCOPYSIGN_EXTEND_ROUND(const TargetLowering &TLI,
+                                                    SDNode *N) {
   SDValue N1 = N->getOperand(1);
   if ((N1.getOpcode() == ISD::FP_EXTEND ||
        N1.getOpcode() == ISD::FP_ROUND)) {
@@ -12672,7 +12673,8 @@ static inline bool CanCombineFCOPYSIGN_EXTEND_ROUND(SDNode *N) {
     // FCOPYSIGN on SSE registers yet.
     EVT N1VT = N1->getValueType(0);
     EVT N1Op0VT = N1->getOperand(0).getValueType();
-    return (N1VT == N1Op0VT || N1Op0VT != MVT::f128);
+    return (N1VT == N1Op0VT ||
+            (TLI.isTypeLegal(N1Op0VT) && N1Op0VT != MVT::f128));
   }
   return false;
 }
@@ -12718,7 +12720,7 @@ SDValue DAGCombiner::visitFCOPYSIGN(SDNode *N) {
 
   // copysign(x, fp_extend(y)) -> copysign(x, y)
   // copysign(x, fp_round(y)) -> copysign(x, y)
-  if (CanCombineFCOPYSIGN_EXTEND_ROUND(N))
+  if (CanCombineFCOPYSIGN_EXTEND_ROUND(TLI, N))
     return DAG.getNode(ISD::FCOPYSIGN, SDLoc(N), VT, N0, N1.getOperand(0));
 
   return SDValue();
