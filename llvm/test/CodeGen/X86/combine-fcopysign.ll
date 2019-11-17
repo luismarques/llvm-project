@@ -244,38 +244,12 @@ define <4 x double> @combine_vec_fcopysign_fpext_sgn(<4 x double> %x, <4 x float
 define <4 x float> @combine_vec_fcopysign_fptrunc_sgn(<4 x float> %x, <4 x double> %y) {
 ; SSE-LABEL: combine_vec_fcopysign_fptrunc_sgn:
 ; SSE:       # %bb.0:
-; SSE-NEXT:    movaps %xmm0, %xmm3
-; SSE-NEXT:    unpckhpd {{.*#+}} xmm3 = xmm3[1],xmm0[1]
-; SSE-NEXT:    movaps {{.*#+}} xmm4 = [NaN,NaN,NaN,NaN]
-; SSE-NEXT:    andps %xmm4, %xmm3
-; SSE-NEXT:    cvtsd2ss %xmm2, %xmm5
-; SSE-NEXT:    movaps %xmm4, %xmm6
-; SSE-NEXT:    andnps %xmm5, %xmm6
-; SSE-NEXT:    orps %xmm3, %xmm6
-; SSE-NEXT:    movaps %xmm0, %xmm3
-; SSE-NEXT:    andps %xmm4, %xmm3
-; SSE-NEXT:    xorps %xmm5, %xmm5
-; SSE-NEXT:    cvtsd2ss %xmm1, %xmm5
-; SSE-NEXT:    movaps %xmm4, %xmm7
-; SSE-NEXT:    andnps %xmm5, %xmm7
-; SSE-NEXT:    orps %xmm7, %xmm3
-; SSE-NEXT:    movshdup {{.*#+}} xmm5 = xmm0[1,1,3,3]
-; SSE-NEXT:    andps %xmm4, %xmm5
-; SSE-NEXT:    movhlps {{.*#+}} xmm1 = xmm1[1,1]
-; SSE-NEXT:    cvtsd2ss %xmm1, %xmm1
-; SSE-NEXT:    andps {{.*}}(%rip), %xmm1
-; SSE-NEXT:    orps %xmm5, %xmm1
-; SSE-NEXT:    unpcklps {{.*#+}} xmm3 = xmm3[0],xmm1[0],xmm3[1],xmm1[1]
-; SSE-NEXT:    insertps {{.*#+}} xmm3 = xmm3[0,1],xmm6[0],xmm3[3]
-; SSE-NEXT:    shufps {{.*#+}} xmm0 = xmm0[3,1,2,3]
-; SSE-NEXT:    andps %xmm4, %xmm0
-; SSE-NEXT:    movhlps {{.*#+}} xmm2 = xmm2[1,1]
-; SSE-NEXT:    xorps %xmm1, %xmm1
-; SSE-NEXT:    cvtsd2ss %xmm2, %xmm1
-; SSE-NEXT:    andnps %xmm1, %xmm4
-; SSE-NEXT:    orps %xmm0, %xmm4
-; SSE-NEXT:    insertps {{.*#+}} xmm3 = xmm3[0,1,2],xmm4[0]
-; SSE-NEXT:    movaps %xmm3, %xmm0
+; SSE-NEXT:    cvtpd2ps        %xmm2, %xmm2
+; SSE-NEXT:    cvtpd2ps        %xmm1, %xmm1
+; SSE-NEXT:    unpcklpd        %xmm2, %xmm1    # xmm1 = xmm1[0],xmm2[0]
+; SSE-NEXT:    andpd   .LCPI11_0(%rip), %xmm1
+; SSE-NEXT:    andpd   .LCPI11_1(%rip), %xmm0
+; SSE-NEXT:    orpd    %xmm1, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_vec_fcopysign_fptrunc_sgn:
