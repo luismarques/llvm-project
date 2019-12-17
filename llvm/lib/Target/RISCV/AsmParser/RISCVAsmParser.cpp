@@ -132,6 +132,7 @@ class RISCVAsmParser : public MCTargetAsmParser {
   OperandMatchResultTy parseOperandWithModifier(OperandVector &Operands);
   OperandMatchResultTy parseBareSymbol(OperandVector &Operands);
   OperandMatchResultTy parseCallSymbol(OperandVector &Operands);
+  OperandMatchResultTy parseCallSymbol2(OperandVector &Operands);
   OperandMatchResultTy parseJALOffset(OperandVector &Operands);
 
   bool parseOperand(OperandVector &Operands, StringRef Mnemonic);
@@ -300,6 +301,10 @@ public:
       return false;
     return RISCVAsmParser::classifySymbolRef(getImm(), VK, Imm) &&
            VK == RISCVMCExpr::VK_RISCV_None;
+  }
+
+  bool isCallSymbol2() const {
+    return isCallSymbol();
   }
 
   bool isCallSymbol() const {
@@ -1246,6 +1251,29 @@ OperandMatchResultTy RISCVAsmParser::parseCallSymbol(OperandVector &Operands) {
 
   // Avoid parsing the register in `call rd, foo` as a call symbol.
   if (getLexer().peekTok().getKind() != AsmToken::EndOfStatement)
+    return MatchOperand_NoMatch;
+
+  StringRef Identifier;
+  if (getParser().parseIdentifier(Identifier))
+    return MatchOperand_ParseFail;
+
+  RISCVMCExpr::VariantKind Kind = RISCVMCExpr::VK_RISCV_CALL;
+  if (Identifier.consume_back("@plt"))
+    Kind = RISCVMCExpr::VK_RISCV_CALL_PLT;
+
+  MCSymbol *Sym = getContext().getOrCreateSymbol(Identifier);
+  Res = MCSymbolRefExpr::create(Sym, MCSymbolRefExpr::VK_None, getContext());
+  Res = RISCVMCExpr::create(Res, Kind, getContext());
+  Operands.push_back(RISCVOperand::createImm(Res, S, E, isRV64()));
+  return MatchOperand_Success;
+}
+
+OperandMatchResultTy RISCVAsmParser::parseCallSymbol2(OperandVector &Operands) {
+  SMLoc S = getLoc();
+  SMLoc E = SMLoc::getFromPointer(S.getPointer() - 1);
+  const MCExpr *Res;
+
+  if (getLexer().getKind() != AsmToken::Identifier)
     return MatchOperand_NoMatch;
 
   StringRef Identifier;

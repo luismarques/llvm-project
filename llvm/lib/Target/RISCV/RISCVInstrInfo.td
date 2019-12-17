@@ -222,6 +222,17 @@ def call_symbol : Operand<XLenVT> {
   let ParserMatchClass = CallSymbol;
 }
 
+def CallSymbol2 : AsmOperandClass {
+  let Name = "CallSymbol2";
+  let RenderMethod = "addImmOperands";
+  let DiagnosticType = "InvalidCallSymbol";
+  let ParserMethod = "parseCallSymbol2";
+}
+
+def call_symbol2 : Operand<XLenVT> {
+  let ParserMatchClass = CallSymbol2;
+}
+
 def TPRelAddSymbol : AsmOperandClass {
   let Name = "TPRelAddSymbol";
   let RenderMethod = "addImmOperands";
@@ -918,6 +929,12 @@ def PseudoCALLReg : Pseudo<(outs GPR:$rd), (ins call_symbol:$func), []> {
 let isCall = 1, Defs = [X1], isCodeGenOnly = 0 in
 def PseudoCALL : Pseudo<(outs), (ins call_symbol:$func), []> {
   let AsmString = "call\t$func";
+}
+
+let isCall = 1, isBarrier = 1, isCodeGenOnly = 0, hasSideEffects = 0,
+    mayStore = 0, mayLoad = 0 in
+def PseudoJump : Pseudo<(outs GPR:$rd), (ins call_symbol2:$func), []> {
+  let AsmString = "jump\t$func, $rd";
 }
 
 def : Pat<(riscv_call tglobaladdr:$func), (PseudoCALL tglobaladdr:$func)>;
