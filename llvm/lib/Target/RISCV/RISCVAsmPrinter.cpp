@@ -115,6 +115,9 @@ bool RISCVAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
   case MachineOperand::MO_Register:
     OS << RISCVInstPrinter::getRegisterName(MO.getReg());
     return false;
+  case MachineOperand::MO_GlobalAddress:
+    PrintSymbolOperand(MO, OS);
+    return false;
   default:
     break;
   }
