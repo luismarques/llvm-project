@@ -27,7 +27,7 @@ int RISCVTTIImpl::getIntImmCost(const APInt &Imm, Type *Ty,
   // Otherwise, we check how many instructions it will take to materialise.
   const DataLayout &DL = getDataLayout();
   return RISCVMatInt::getIntMatCost(Imm, DL.getTypeSizeInBits(Ty),
-                                    getST()->is64Bit());
+                                    getST()->is64Bit(), false);
 }
 
 int RISCVTTIImpl::getIntImmCostInst(unsigned Opcode, unsigned Idx, const APInt &Imm,

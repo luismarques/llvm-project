@@ -18,14 +18,14 @@ define double @double_imm() nounwind {
 ;
 ; RV64IFD-LABEL: double_imm:
 ; RV64IFD:       # %bb.0:
-; RV64IFD-NEXT:    lui a0, 512
-; RV64IFD-NEXT:    addiw a0, a0, 1169
-; RV64IFD-NEXT:    slli a0, a0, 15
-; RV64IFD-NEXT:    addi a0, a0, -299
-; RV64IFD-NEXT:    slli a0, a0, 14
-; RV64IFD-NEXT:    addi a0, a0, 1091
+; RV64IFD-NEXT:    lui a0, 131145
+; RV64IFD-NEXT:    slli a0, a0, 3
+; RV64IFD-NEXT:    addi a0, a0, 2029
 ; RV64IFD-NEXT:    slli a0, a0, 12
-; RV64IFD-NEXT:    addi a0, a0, -744
+; RV64IFD-NEXT:    addi a0, a0, 1297
+; RV64IFD-NEXT:    slli a0, a0, 15
+; RV64IFD-NEXT:    addi a0, a0, 1443
+; RV64IFD-NEXT:    slli a0, a0, 3
 ; RV64IFD-NEXT:    ret
   ret double 3.1415926535897931159979634685441851615905761718750
 }

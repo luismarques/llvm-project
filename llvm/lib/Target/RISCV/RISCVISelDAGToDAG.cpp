@@ -27,9 +27,9 @@ void RISCVDAGToDAGISel::PostprocessISelDAG() {
 }
 
 static SDNode *selectImm(SelectionDAG *CurDAG, const SDLoc &DL, int64_t Imm,
-                         MVT XLenVT) {
+                         MVT XLenVT, bool OptSize) {
   RISCVMatInt::InstSeq Seq;
-  RISCVMatInt::generateInstSeq(Imm, XLenVT == MVT::i64, Seq);
+  RISCVMatInt::generateInstSeq(Imm, Seq, XLenVT == MVT::i64, OptSize);
 
   SDNode *Result = nullptr;
   SDValue SrcReg = CurDAG->getRegister(RISCV::X0, XLenVT);
@@ -83,11 +83,8 @@ void RISCVDAGToDAGISel::Select(SDNode *Node) {
       return;
     }
     int64_t Imm = ConstNode->getSExtValue();
-    if (XLenVT == MVT::i64) {
-      ReplaceNode(Node, selectImm(CurDAG, SDLoc(Node), Imm, XLenVT));
-      return;
-    }
-    break;
+    ReplaceNode(Node, selectImm(CurDAG, SDLoc(Node), Imm, XLenVT, OptSize));
+    return;
   }
   case ISD::FrameIndex: {
     SDValue Imm = CurDAG->getTargetConstant(0, DL, XLenVT);

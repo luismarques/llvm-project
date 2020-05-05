@@ -12,8 +12,8 @@ define void @test1([65536 x i32]** %sp, [65536 x i32]* %t, i32 %n) {
 ; RV32I-LABEL: test1:
 ; RV32I:       # %bb.0: # %entry
 ; RV32I-NEXT:    lw a0, 0(a0)
-; RV32I-NEXT:    lui a2, 20
-; RV32I-NEXT:    addi a2, a2, -1920
+; RV32I-NEXT:    addi a2, zero, 625
+; RV32I-NEXT:    slli a2, a2, 7
 ; RV32I-NEXT:    add a1, a1, a2
 ; RV32I-NEXT:    add a0, a0, a2
 ; RV32I-NEXT:    addi a2, zero, 2
@@ -57,8 +57,8 @@ define void @test2([65536 x i32]** %sp, [65536 x i32]* %t, i32 %n) {
 ; RV32I:       # %bb.0: # %entry
 ; RV32I-NEXT:    mv a3, zero
 ; RV32I-NEXT:    lw a4, 0(a0)
-; RV32I-NEXT:    lui a0, 20
-; RV32I-NEXT:    addi a5, a0, -1920
+; RV32I-NEXT:    addi a0, zero, 625
+; RV32I-NEXT:    slli a5, a0, 7
 ; RV32I-NEXT:    add a0, a1, a5
 ; RV32I-NEXT:    add a1, a4, a5
 ; RV32I-NEXT:    bge a3, a2, .LBB1_2

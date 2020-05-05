@@ -73,8 +73,8 @@ define double @bitcast_double_and(double %a1, double %a2) nounwind {
 ; RV32F-NEXT:    mv s1, a0
 ; RV32F-NEXT:    call __adddf3
 ; RV32F-NEXT:    mv a2, a0
-; RV32F-NEXT:    lui a0, 524288
-; RV32F-NEXT:    addi a0, a0, -1
+; RV32F-NEXT:    addi a0, zero, -1
+; RV32F-NEXT:    srli a0, a0, 1
 ; RV32F-NEXT:    and a3, a1, a0
 ; RV32F-NEXT:    mv a0, s1
 ; RV32F-NEXT:    mv a1, s0
@@ -111,8 +111,7 @@ define double @bitcast_double_and(double %a1, double %a2) nounwind {
 ; RV64F-NEXT:    mv s0, a0
 ; RV64F-NEXT:    call __adddf3
 ; RV64F-NEXT:    addi a1, zero, -1
-; RV64F-NEXT:    slli a1, a1, 63
-; RV64F-NEXT:    addi a1, a1, -1
+; RV64F-NEXT:    srli a1, a1, 1
 ; RV64F-NEXT:    and a1, a0, a1
 ; RV64F-NEXT:    mv a0, s0
 ; RV64F-NEXT:    call __adddf3

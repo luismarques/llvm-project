@@ -54,12 +54,12 @@ define void @test_emergency_spill_slot(i32 %a) {
 ; RV32I-FPELIM-NEXT:    sw s1, 2024(sp)
 ; RV32I-FPELIM-NEXT:    .cfi_offset s0, -4
 ; RV32I-FPELIM-NEXT:    .cfi_offset s1, -8
-; RV32I-FPELIM-NEXT:    lui a1, 97
-; RV32I-FPELIM-NEXT:    addi a1, a1, 672
+; RV32I-FPELIM-NEXT:    lui a1, 795968
+; RV32I-FPELIM-NEXT:    srli a1, a1, 13
 ; RV32I-FPELIM-NEXT:    sub sp, sp, a1
 ; RV32I-FPELIM-NEXT:    .cfi_def_cfa_offset 400016
-; RV32I-FPELIM-NEXT:    lui a1, 78
-; RV32I-FPELIM-NEXT:    addi a1, a1, 512
+; RV32I-FPELIM-NEXT:    addi a1, zero, 625
+; RV32I-FPELIM-NEXT:    slli a1, a1, 9
 ; RV32I-FPELIM-NEXT:    addi a2, sp, 8
 ; RV32I-FPELIM-NEXT:    add a1, a2, a1
 ; RV32I-FPELIM-NEXT:    #APP
@@ -69,8 +69,8 @@ define void @test_emergency_spill_slot(i32 %a) {
 ; RV32I-FPELIM-NEXT:    #APP
 ; RV32I-FPELIM-NEXT:    nop
 ; RV32I-FPELIM-NEXT:    #NO_APP
-; RV32I-FPELIM-NEXT:    lui a0, 97
-; RV32I-FPELIM-NEXT:    addi a0, a0, 672
+; RV32I-FPELIM-NEXT:    lui a0, 795968
+; RV32I-FPELIM-NEXT:    srli a0, a0, 13
 ; RV32I-FPELIM-NEXT:    add sp, sp, a0
 ; RV32I-FPELIM-NEXT:    lw s1, 2024(sp)
 ; RV32I-FPELIM-NEXT:    lw s0, 2028(sp)
@@ -91,11 +91,11 @@ define void @test_emergency_spill_slot(i32 %a) {
 ; RV32I-WITHFP-NEXT:    .cfi_offset s2, -16
 ; RV32I-WITHFP-NEXT:    addi s0, sp, 2032
 ; RV32I-WITHFP-NEXT:    .cfi_def_cfa s0, 0
-; RV32I-WITHFP-NEXT:    lui a1, 97
-; RV32I-WITHFP-NEXT:    addi a1, a1, 688
+; RV32I-WITHFP-NEXT:    lui a1, 796000
+; RV32I-WITHFP-NEXT:    srli a1, a1, 13
 ; RV32I-WITHFP-NEXT:    sub sp, sp, a1
-; RV32I-WITHFP-NEXT:    lui a1, 78
-; RV32I-WITHFP-NEXT:    addi a1, a1, 512
+; RV32I-WITHFP-NEXT:    addi a1, zero, 625
+; RV32I-WITHFP-NEXT:    slli a1, a1, 9
 ; RV32I-WITHFP-NEXT:    lui a2, 1048478
 ; RV32I-WITHFP-NEXT:    addi a2, a2, 1388
 ; RV32I-WITHFP-NEXT:    add a2, s0, a2
@@ -108,8 +108,8 @@ define void @test_emergency_spill_slot(i32 %a) {
 ; RV32I-WITHFP-NEXT:    #APP
 ; RV32I-WITHFP-NEXT:    nop
 ; RV32I-WITHFP-NEXT:    #NO_APP
-; RV32I-WITHFP-NEXT:    lui a0, 97
-; RV32I-WITHFP-NEXT:    addi a0, a0, 688
+; RV32I-WITHFP-NEXT:    lui a0, 796000
+; RV32I-WITHFP-NEXT:    srli a0, a0, 13
 ; RV32I-WITHFP-NEXT:    add sp, sp, a0
 ; RV32I-WITHFP-NEXT:    lw s2, 2016(sp)
 ; RV32I-WITHFP-NEXT:    lw s1, 2020(sp)

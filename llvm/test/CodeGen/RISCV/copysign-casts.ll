@@ -21,7 +21,8 @@ define double @fold_promote(double %a, float %b) nounwind {
 ; RV32I:       # %bb.0:
 ; RV32I-NEXT:    lui a3, 524288
 ; RV32I-NEXT:    and a2, a2, a3
-; RV32I-NEXT:    addi a3, a3, -1
+; RV32I-NEXT:    addi a3, zero, -1
+; RV32I-NEXT:    srli a3, a3, 1
 ; RV32I-NEXT:    and a1, a1, a3
 ; RV32I-NEXT:    or a1, a1, a2
 ; RV32I-NEXT:    ret
@@ -29,8 +30,7 @@ define double @fold_promote(double %a, float %b) nounwind {
 ; RV64I-LABEL: fold_promote:
 ; RV64I:       # %bb.0:
 ; RV64I-NEXT:    addi a2, zero, -1
-; RV64I-NEXT:    slli a2, a2, 63
-; RV64I-NEXT:    addi a2, a2, -1
+; RV64I-NEXT:    srli a2, a2, 1
 ; RV64I-NEXT:    and a0, a0, a2
 ; RV64I-NEXT:    addi a2, zero, 1
 ; RV64I-NEXT:    slli a2, a2, 31
@@ -44,7 +44,8 @@ define double @fold_promote(double %a, float %b) nounwind {
 ; RV32IF-NEXT:    fmv.x.w a2, fa0
 ; RV32IF-NEXT:    lui a3, 524288
 ; RV32IF-NEXT:    and a2, a2, a3
-; RV32IF-NEXT:    addi a3, a3, -1
+; RV32IF-NEXT:    addi a3, zero, -1
+; RV32IF-NEXT:    srli a3, a3, 1
 ; RV32IF-NEXT:    and a1, a1, a3
 ; RV32IF-NEXT:    or a1, a1, a2
 ; RV32IF-NEXT:    ret
@@ -69,18 +70,18 @@ define float @fold_demote(float %a, double %b) nounwind {
 ; RV32I-LABEL: fold_demote:
 ; RV32I:       # %bb.0:
 ; RV32I-NEXT:    lui a1, 524288
-; RV32I-NEXT:    and a2, a2, a1
-; RV32I-NEXT:    addi a1, a1, -1
-; RV32I-NEXT:    and a0, a0, a1
-; RV32I-NEXT:    or a0, a0, a2
+; RV32I-NEXT:    and a1, a2, a1
+; RV32I-NEXT:    addi a2, zero, -1
+; RV32I-NEXT:    srli a2, a2, 1
+; RV32I-NEXT:    and a0, a0, a2
+; RV32I-NEXT:    or a0, a0, a1
 ; RV32I-NEXT:    ret
 ;
 ; RV64I-LABEL: fold_demote:
 ; RV64I:       # %bb.0:
-; RV64I-NEXT:    lui a2, 524288
-; RV64I-NEXT:    addiw a2, a2, -1
-; RV64I-NEXT:    and a0, a0, a2
 ; RV64I-NEXT:    addi a2, zero, -1
+; RV64I-NEXT:    srli a3, a2, 33
+; RV64I-NEXT:    and a0, a0, a3
 ; RV64I-NEXT:    slli a2, a2, 63
 ; RV64I-NEXT:    and a1, a1, a2
 ; RV64I-NEXT:    srli a1, a1, 32

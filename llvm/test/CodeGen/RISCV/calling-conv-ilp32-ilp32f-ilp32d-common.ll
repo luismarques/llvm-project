@@ -788,8 +788,8 @@ define i32 @caller_small_scalar_ret() nounwind {
 ; RV32I-FPELIM-NEXT:    addi sp, sp, -16
 ; RV32I-FPELIM-NEXT:    sw ra, 12(sp)
 ; RV32I-FPELIM-NEXT:    call callee_small_scalar_ret
-; RV32I-FPELIM-NEXT:    lui a2, 56
-; RV32I-FPELIM-NEXT:    addi a2, a2, 580
+; RV32I-FPELIM-NEXT:    lui a2, 919824
+; RV32I-FPELIM-NEXT:    srli a2, a2, 14
 ; RV32I-FPELIM-NEXT:    xor a1, a1, a2
 ; RV32I-FPELIM-NEXT:    lui a2, 200614
 ; RV32I-FPELIM-NEXT:    addi a2, a2, 647
@@ -807,8 +807,8 @@ define i32 @caller_small_scalar_ret() nounwind {
 ; RV32I-WITHFP-NEXT:    sw s0, 8(sp)
 ; RV32I-WITHFP-NEXT:    addi s0, sp, 16
 ; RV32I-WITHFP-NEXT:    call callee_small_scalar_ret
-; RV32I-WITHFP-NEXT:    lui a2, 56
-; RV32I-WITHFP-NEXT:    addi a2, a2, 580
+; RV32I-WITHFP-NEXT:    lui a2, 919824
+; RV32I-WITHFP-NEXT:    srli a2, a2, 14
 ; RV32I-WITHFP-NEXT:    xor a1, a1, a2
 ; RV32I-WITHFP-NEXT:    lui a2, 200614
 ; RV32I-WITHFP-NEXT:    addi a2, a2, 647

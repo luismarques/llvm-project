@@ -30,8 +30,8 @@ define i32 @test_bswap_i32(i32 %a) nounwind {
 ; RV32I-LABEL: test_bswap_i32:
 ; RV32I:       # %bb.0:
 ; RV32I-NEXT:    srli a1, a0, 8
-; RV32I-NEXT:    lui a2, 16
-; RV32I-NEXT:    addi a2, a2, -256
+; RV32I-NEXT:    addi a2, zero, 255
+; RV32I-NEXT:    slli a2, a2, 8
 ; RV32I-NEXT:    and a1, a1, a2
 ; RV32I-NEXT:    srli a2, a0, 24
 ; RV32I-NEXT:    or a1, a1, a2
@@ -50,8 +50,8 @@ define i64 @test_bswap_i64(i64 %a) nounwind {
 ; RV32I-LABEL: test_bswap_i64:
 ; RV32I:       # %bb.0:
 ; RV32I-NEXT:    srli a2, a1, 8
-; RV32I-NEXT:    lui a3, 16
-; RV32I-NEXT:    addi a3, a3, -256
+; RV32I-NEXT:    addi a3, zero, 255
+; RV32I-NEXT:    slli a3, a3, 8
 ; RV32I-NEXT:    and a2, a2, a3
 ; RV32I-NEXT:    srli a4, a1, 24
 ; RV32I-NEXT:    or a2, a2, a4

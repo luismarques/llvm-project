@@ -30,7 +30,7 @@ using InstSeq = SmallVector<Inst, 8>;
 // a simple struct produced rather than directly emitting the instructions in
 // order to allow this helper to be used from both the MC layer and during
 // instruction selection.
-void generateInstSeq(int64_t Val, bool IsRV64, InstSeq &Res);
+void generateInstSeq(int64_t Val, InstSeq &Res, bool IsRV64, bool OptSize);
 
 // Helper to estimate the number of instructions required to materialise the
 // given immediate value into a register. This estimate does not account for
@@ -38,7 +38,7 @@ void generateInstSeq(int64_t Val, bool IsRV64, InstSeq &Res);
 //
 // This will attempt to produce instructions to materialise `Val` as an
 // `Size`-bit immediate. `IsRV64` should match the target architecture.
-int getIntMatCost(const APInt &Val, unsigned Size, bool IsRV64);
+int getIntMatCost(const APInt &Val, unsigned Size, bool IsRV64, bool OptSize);
 } // namespace RISCVMatInt
 } // namespace llvm
 #endif

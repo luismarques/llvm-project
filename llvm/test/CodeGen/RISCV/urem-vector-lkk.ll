@@ -795,8 +795,8 @@ define <4 x i16> @dont_fold_urem_one(<4 x i16> %x) nounwind {
 ; RV32I-NEXT:    mv a0, s1
 ; RV32I-NEXT:    call __umodsi3
 ; RV32I-NEXT:    mv s1, a0
-; RV32I-NEXT:    lui a0, 1
-; RV32I-NEXT:    addi a1, a0, 1327
+; RV32I-NEXT:    lui a0, 694144
+; RV32I-NEXT:    srli a1, a0, 19
 ; RV32I-NEXT:    mv a0, s2
 ; RV32I-NEXT:    call __umodsi3
 ; RV32I-NEXT:    sh zero, 0(s0)
@@ -835,8 +835,8 @@ define <4 x i16> @dont_fold_urem_one(<4 x i16> %x) nounwind {
 ; RV32IM-NEXT:    addi a4, a4, -2009
 ; RV32IM-NEXT:    mulhu a4, a3, a4
 ; RV32IM-NEXT:    srli a4, a4, 11
-; RV32IM-NEXT:    lui a5, 1
-; RV32IM-NEXT:    addi a5, a5, 1327
+; RV32IM-NEXT:    lui a5, 694144
+; RV32IM-NEXT:    srli a5, a5, 19
 ; RV32IM-NEXT:    mul a4, a4, a5
 ; RV32IM-NEXT:    sub a3, a3, a4
 ; RV32IM-NEXT:    sh zero, 0(a0)
@@ -993,8 +993,8 @@ define <4 x i64> @dont_fold_urem_i64(<4 x i64> %x) nounwind {
 ; RV32I-NEXT:    call __umoddi3
 ; RV32I-NEXT:    mv s4, a0
 ; RV32I-NEXT:    mv s1, a1
-; RV32I-NEXT:    lui a0, 1
-; RV32I-NEXT:    addi a2, a0, 1327
+; RV32I-NEXT:    lui a0, 694144
+; RV32I-NEXT:    srli a2, a0, 19
 ; RV32I-NEXT:    mv a0, s2
 ; RV32I-NEXT:    mv a1, s3
 ; RV32I-NEXT:    mv a3, zero
@@ -1064,8 +1064,8 @@ define <4 x i64> @dont_fold_urem_i64(<4 x i64> %x) nounwind {
 ; RV32IM-NEXT:    call __umoddi3
 ; RV32IM-NEXT:    mv s4, a0
 ; RV32IM-NEXT:    mv s1, a1
-; RV32IM-NEXT:    lui a0, 1
-; RV32IM-NEXT:    addi a2, a0, 1327
+; RV32IM-NEXT:    lui a0, 694144
+; RV32IM-NEXT:    srli a2, a0, 19
 ; RV32IM-NEXT:    mv a0, s2
 ; RV32IM-NEXT:    mv a1, s3
 ; RV32IM-NEXT:    mv a3, zero

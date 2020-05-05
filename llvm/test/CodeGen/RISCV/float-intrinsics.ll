@@ -348,15 +348,15 @@ declare float @llvm.fabs.f32(float)
 define float @fabs_f32(float %a) nounwind {
 ; RV32IF-LABEL: fabs_f32:
 ; RV32IF:       # %bb.0:
-; RV32IF-NEXT:    lui a1, 524288
-; RV32IF-NEXT:    addi a1, a1, -1
+; RV32IF-NEXT:    addi a1, zero, -1
+; RV32IF-NEXT:    srli a1, a1, 1
 ; RV32IF-NEXT:    and a0, a0, a1
 ; RV32IF-NEXT:    ret
 ;
 ; RV64IF-LABEL: fabs_f32:
 ; RV64IF:       # %bb.0:
-; RV64IF-NEXT:    lui a1, 524288
-; RV64IF-NEXT:    addiw a1, a1, -1
+; RV64IF-NEXT:    addi a1, zero, -1
+; RV64IF-NEXT:    srli a1, a1, 33
 ; RV64IF-NEXT:    and a0, a0, a1
 ; RV64IF-NEXT:    ret
   %1 = call float @llvm.fabs.f32(float %a)

@@ -22,6 +22,7 @@
 namespace llvm {
 class RISCVDAGToDAGISel : public SelectionDAGISel {
   const RISCVSubtarget *Subtarget = nullptr;
+  bool OptSize = false;
 
 public:
   explicit RISCVDAGToDAGISel(RISCVTargetMachine &TargetMachine)
@@ -33,6 +34,7 @@ public:
 
   bool runOnMachineFunction(MachineFunction &MF) override {
     Subtarget = &MF.getSubtarget<RISCVSubtarget>();
+    OptSize = MF.getFunction().hasOptSize();
     return SelectionDAGISel::runOnMachineFunction(MF);
   }
 

@@ -176,7 +176,7 @@ void RISCVInstrInfo::movImm(MachineBasicBlock &MBB,
     report_fatal_error("Should only materialize 32-bit constants for RV32");
 
   RISCVMatInt::InstSeq Seq;
-  RISCVMatInt::generateInstSeq(Val, IsRV64, Seq);
+  RISCVMatInt::generateInstSeq(Val, Seq, IsRV64, MF->getFunction().hasOptSize());
   assert(Seq.size() > 0);
 
   for (RISCVMatInt::Inst &Inst : Seq) {
