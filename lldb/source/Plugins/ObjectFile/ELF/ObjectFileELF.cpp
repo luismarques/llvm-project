@@ -1364,6 +1364,18 @@ size_t ObjectFileELF::GetSectionHeaderInfo(SectionHeaderColl &section_headers,
       arch_spec.SetFlags(ArchSpec::eARM_abi_hard_float);
   }
 
+  if (arch_spec.GetMachine() == llvm::Triple::riscv32 ||
+      arch_spec.GetMachine() == llvm::Triple::riscv64) {
+    if (header.e_flags & llvm::ELF::EF_RISCV_RVC)
+      arch_spec.SetFlags(ArchSpec::eRISCV_arch_c);
+    if ((header.e_flags & llvm::ELF::EF_RISCV_FLOAT_ABI) ==
+        llvm::ELF::EF_RISCV_FLOAT_ABI_SINGLE)
+      arch_spec.SetFlags(ArchSpec::eRISCV_abi_f);
+    if ((header.e_flags & llvm::ELF::EF_RISCV_FLOAT_ABI) ==
+        llvm::ELF::EF_RISCV_FLOAT_ABI_DOUBLE)
+      arch_spec.SetFlags(ArchSpec::eRISCV_abi_d);
+  }
+
   // If there are no section headers we are done.
   if (header.e_shnum == 0)
     return 0;
