@@ -99,6 +99,12 @@ public:
     eRISCV_abi_d = 0x00000020
   };
 
+  enum RISCVSubType {
+    eRISCVSubType_unknown,
+    eRISCVSubType_riscv32,
+    eRISCVSubType_riscv64,
+  };
+
   enum Core {
     eCore_arm_generic,
     eCore_arm_armv4,
@@ -190,6 +196,9 @@ public:
     eCore_hexagon_generic,
     eCore_hexagon_hexagonv4,
     eCore_hexagon_hexagonv5,
+
+    eCore_riscv32,
+    eCore_riscv64,
 
     eCore_uknownMach32,
     eCore_uknownMach64,
