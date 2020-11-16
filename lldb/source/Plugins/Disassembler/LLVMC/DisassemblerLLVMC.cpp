@@ -1149,6 +1149,11 @@ DisassemblerLLVMC::DisassemblerLLVMC(const ArchSpec &arch,
     cpu = "apple-latest";
   }
 
+  // For RISC-V, enable all standard extensions so these can be disassembled.
+  if (triple.getArch() == llvm::Triple::riscv32 ||
+      triple.getArch() == llvm::Triple::riscv64)
+    features_str += "+a,+c,+d,+f,+m";
+
   // We use m_disasm_up.get() to tell whether we are valid or not, so if this
   // isn't good for some reason, we won't be valid and FindPlugin will fail and
   // we won't get used.

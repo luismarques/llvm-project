@@ -92,6 +92,13 @@ public:
     eARM_abi_hard_float = 0x00000400
   };
 
+  // RISCV specific flags
+  enum RISCVflags {
+    eRISCV_arch_c = 0x00000001,
+    eRISCV_abi_f = 0x00000010,
+    eRISCV_abi_d = 0x00000020
+  };
+
   enum Core {
     eCore_arm_generic,
     eCore_arm_armv4,
