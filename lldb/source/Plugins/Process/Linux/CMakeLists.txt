@@ -5,6 +5,7 @@ add_lldb_library(lldbPluginProcessLinux
   NativeRegisterContextLinux_arm64.cpp
   NativeRegisterContextLinux_mips64.cpp
   NativeRegisterContextLinux_ppc64le.cpp
+  NativeRegisterContextLinux_riscv.cpp
   NativeRegisterContextLinux_s390x.cpp
   NativeRegisterContextLinux_x86_64.cpp
   NativeThreadLinux.cpp

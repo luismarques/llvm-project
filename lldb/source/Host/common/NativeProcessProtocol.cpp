@@ -547,6 +547,16 @@ NativeProcessProtocol::GetSoftwareBreakpointTrapOpcode(size_t size_hint) {
   case llvm::Triple::ppc64le:
     return llvm::makeArrayRef(g_ppc64le_opcode);
 
+  case llvm::Triple::riscv32:
+  case llvm::Triple::riscv64: {
+    static const uint8_t g_riscv_c_opcode[] = {0x02, 0x90}; // c_ebreak
+    static const uint8_t g_riscv_opcode[] = {0x73, 0x00, 0x10, 0x00}; // ebreak
+    if (GetArchitecture().GetFlags() & ArchSpec::eRISCV_arch_c)
+      return llvm::makeArrayRef(g_riscv_c_opcode);
+    else
+      return llvm::makeArrayRef(g_riscv_opcode);
+  }
+
   default:
     return llvm::createStringError(llvm::inconvertibleErrorCode(),
                                    "CPU type not supported!");
@@ -569,6 +579,8 @@ size_t NativeProcessProtocol::GetSoftwareBreakpointPCOffset() {
   case llvm::Triple::mips:
   case llvm::Triple::mipsel:
   case llvm::Triple::ppc64le:
+  case llvm::Triple::riscv32:
+  case llvm::Triple::riscv64:
     // On these architectures the PC doesn't get updated for breakpoint hits.
     return 0;
 
