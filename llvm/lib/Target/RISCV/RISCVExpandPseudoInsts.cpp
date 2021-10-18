@@ -173,8 +173,11 @@ bool RISCVExpandPseudo::expandAuipcInstPair(
 
   MF->insert(++MBB.getIterator(), NewMBB);
 
-  BuildMI(NewMBB, DL, TII->get(RISCV::AUIPC), DestReg)
-      .addDisp(Symbol, 0, FlagsHi);
+  auto MIB = BuildMI(NewMBB, DL, TII->get(RISCV::AUIPC), DestReg);
+  if (Symbol.getType() == MachineOperand::MO_ExternalSymbol)
+    MIB.addExternalSymbol(Symbol.getSymbolName(), FlagsHi);
+  else
+    MIB.addDisp(Symbol, 0, FlagsHi);
   BuildMI(NewMBB, DL, TII->get(SecondOpcode), DestReg)
       .addReg(DestReg)
       .addMBB(NewMBB, RISCVII::MO_PCREL_LO);
