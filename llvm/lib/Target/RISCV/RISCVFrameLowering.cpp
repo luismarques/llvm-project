@@ -27,12 +27,19 @@
 
 using namespace llvm;
 
+// Returns the register used to hold the frame pointer.
+static Register getFPReg(const RISCVSubtarget &STI) { return RISCV::X8; }
+
+// Returns the register used to hold the stack pointer.
+static Register getSPReg(const RISCVSubtarget &STI) { return RISCV::X2; }
+
 // For now we use x18, a.k.a s2, as pointer to shadow call stack.
 // User should explicitly set -ffixed-x18 and not use x18 in their asm.
 static void emitSCSPrologue(MachineFunction &MF, MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MI,
                             const DebugLoc &DL) {
-  if (!MF.getFunction().hasFnAttribute(Attribute::ShadowCallStack))
+  if (!MF.getFunction().hasFnAttribute(Attribute::ShadowCallStack) ||
+      MF.getFunction().hasFnAttribute("interrupt"))
     return;
 
   const auto &STI = MF.getSubtarget<RISCVSubtarget>();
@@ -65,25 +72,32 @@ static void emitSCSPrologue(MachineFunction &MF, MachineBasicBlock &MBB,
   const RISCVInstrInfo *TII = STI.getInstrInfo();
   bool IsRV64 = STI.hasFeature(RISCV::Feature64Bit);
   int64_t SlotSize = STI.getXLen() / 8;
-  // Store return address to shadow call stack
+  // Store return address and the stack pointer to shadow call stack.
   // s[w|d]  ra, 0(s2)
-  // addi    s2, s2, [4|8]
+  // s[w|d]  sp, [4|8](s2)
+  // addi    s2, s2, [4|8]*2
   BuildMI(MBB, MI, DL, TII->get(IsRV64 ? RISCV::SD : RISCV::SW))
       .addReg(RAReg)
       .addReg(SCSPReg)
       .addImm(0)
       .setMIFlag(MachineInstr::FrameSetup);
+  BuildMI(MBB, MI, DL, TII->get(IsRV64 ? RISCV::SD : RISCV::SW))
+      .addReg(getSPReg(STI))
+      .addReg(SCSPReg)
+      .addImm(SlotSize)
+      .setMIFlag(MachineInstr::FrameSetup);
   BuildMI(MBB, MI, DL, TII->get(RISCV::ADDI))
       .addReg(SCSPReg, RegState::Define)
       .addReg(SCSPReg)
-      .addImm(SlotSize)
+      .addImm(SlotSize * 2)
       .setMIFlag(MachineInstr::FrameSetup);
 }
 
 static void emitSCSEpilogue(MachineFunction &MF, MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MI,
                             const DebugLoc &DL) {
-  if (!MF.getFunction().hasFnAttribute(Attribute::ShadowCallStack))
+  if (!MF.getFunction().hasFnAttribute(Attribute::ShadowCallStack) ||
+      MF.getFunction().hasFnAttribute("interrupt"))
     return;
 
   const auto &STI = MF.getSubtarget<RISCVSubtarget>();
@@ -115,18 +129,92 @@ static void emitSCSEpilogue(MachineFunction &MF, MachineBasicBlock &MBB,
   const RISCVInstrInfo *TII = STI.getInstrInfo();
   bool IsRV64 = STI.hasFeature(RISCV::Feature64Bit);
   int64_t SlotSize = STI.getXLen() / 8;
-  // Load return address from shadow call stack
-  // l[w|d]  ra, -[4|8](s2)
+  // The assembly code below loads the return address and stack pointer from
+  // the shadow call stack and executes the following pseudo-code without using
+  // branches:
+  //
+  //   if (sp == shadow_sp && ra == shadow_ra) {
+  //     return;
+  //   } else {
+  //     __abi_shutdown$();
+  //  }
+  //
+  // l[w|d]  t0, -[4|8](s2)
+  // l[w|d]  t1, -[4|8]*2(s2)
   // addi    s2, s2, -[4|8]
+  // xor     t0, t0, sp
+  // xor     t1, t1, ra
+  // or      t0, t0, t1
+  // snez    t1, t0
+  // addi    t1, t1, -1
+  // not     t0, t1
+  // la      t2, __abi_shutdown$
+  // and     t0, t0, t2
+  // and     t1, t1, ra
+  // or      ra, t0, t1
   BuildMI(MBB, MI, DL, TII->get(IsRV64 ? RISCV::LD : RISCV::LW))
-      .addReg(RAReg, RegState::Define)
+      .addReg(RISCV::X5, RegState::Define)
       .addReg(SCSPReg)
       .addImm(-SlotSize)
+      .setMIFlag(MachineInstr::FrameDestroy);
+  BuildMI(MBB, MI, DL, TII->get(IsRV64 ? RISCV::LD : RISCV::LW))
+      .addReg(RISCV::X6, RegState::Define)
+      .addReg(SCSPReg)
+      .addImm(-SlotSize * 2)
       .setMIFlag(MachineInstr::FrameDestroy);
   BuildMI(MBB, MI, DL, TII->get(RISCV::ADDI))
       .addReg(SCSPReg, RegState::Define)
       .addReg(SCSPReg)
-      .addImm(-SlotSize)
+      .addImm(-SlotSize * 2)
+      .setMIFlag(MachineInstr::FrameDestroy);
+  BuildMI(MBB, MI, DL, TII->get(RISCV::XOR))
+      .addReg(RISCV::X5, RegState::Define)
+      .addReg(RISCV::X5)
+      .addReg(getSPReg(STI))
+      .setMIFlag(MachineInstr::FrameDestroy);
+  BuildMI(MBB, MI, DL, TII->get(RISCV::XOR))
+      .addReg(RISCV::X6, RegState::Define)
+      .addReg(RISCV::X6)
+      .addReg(RAReg)
+      .setMIFlag(MachineInstr::FrameDestroy);
+  BuildMI(MBB, MI, DL, TII->get(RISCV::OR))
+      .addReg(RISCV::X5, RegState::Define)
+      .addReg(RISCV::X5)
+      .addReg(RISCV::X6)
+      .setMIFlag(MachineInstr::FrameDestroy);
+  BuildMI(MBB, MI, DL, TII->get(RISCV::SLTU))
+      .addReg(RISCV::X6, RegState::Define)
+      .addReg(RISCV::X0)
+      .addReg(RISCV::X5)
+      .setMIFlag(MachineInstr::FrameDestroy);
+  BuildMI(MBB, MI, DL, TII->get(RISCV::ADDI))
+      .addReg(RISCV::X6, RegState::Define)
+      .addReg(RISCV::X6)
+      .addImm(-1)
+      .setMIFlag(MachineInstr::FrameDestroy);
+  BuildMI(MBB, MI, DL, TII->get(RISCV::XORI))
+      .addReg(RISCV::X5, RegState::Define)
+      .addReg(RISCV::X6)
+      .addImm(-1)
+      .setMIFlag(MachineInstr::FrameDestroy);
+  BuildMI(MBB, MI, DL, TII->get(RISCV::PseudoLLA))
+      .addReg(RISCV::X7, RegState::Define)
+      .addExternalSymbol("__abi_shutdown$", RISCVII::MO_CALL)
+      .setMIFlag(MachineInstr::FrameDestroy);
+  BuildMI(MBB, MI, DL, TII->get(RISCV::AND))
+      .addReg(RISCV::X5, RegState::Define)
+      .addReg(RISCV::X5)
+      .addReg(RISCV::X7, RegState::Kill)
+      .setMIFlag(MachineInstr::FrameDestroy);
+  BuildMI(MBB, MI, DL, TII->get(RISCV::AND))
+      .addReg(RISCV::X6, RegState::Define)
+      .addReg(RISCV::X6)
+      .addReg(RAReg)
+      .setMIFlag(MachineInstr::FrameDestroy);
+  BuildMI(MBB, MI, DL, TII->get(RISCV::OR))
+      .addReg(RAReg, RegState::Define)
+      .addReg(RISCV::X5, RegState::Kill)
+      .addReg(RISCV::X6, RegState::Kill)
       .setMIFlag(MachineInstr::FrameDestroy);
 }
 
@@ -290,12 +378,6 @@ uint64_t RISCVFrameLowering::getStackSizeWithRVVPadding(
   auto *RVFI = MF.getInfo<RISCVMachineFunctionInfo>();
   return alignTo(MFI.getStackSize() + RVFI->getRVVPadding(), getStackAlign());
 }
-
-// Returns the register used to hold the frame pointer.
-static Register getFPReg(const RISCVSubtarget &STI) { return RISCV::X8; }
-
-// Returns the register used to hold the stack pointer.
-static Register getSPReg(const RISCVSubtarget &STI) { return RISCV::X2; }
 
 static SmallVector<CalleeSavedInfo, 8>
 getNonLibcallCSI(const MachineFunction &MF,
