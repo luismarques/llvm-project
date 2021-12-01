@@ -758,7 +758,8 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
   uint64_t Count = getProfileCount(S.getThen());
   if (!Count && CGM.getCodeGenOpts().OptimizationLevel)
     LH = Stmt::getLikelihood(S.getThen(), S.getElse());
-  EmitBranchOnBoolExpr(S.getCond(), ThenBlock, ElseBlock, Count, LH);
+  EmitBranchOnBoolExpr(S.getCond(), ThenBlock, ElseBlock, Count, LH,
+                       S.hasDoubleCheck());
 
   // Emit the 'then' code.
   EmitBlock(ThenBlock);

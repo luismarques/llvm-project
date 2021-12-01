@@ -2877,6 +2877,9 @@ def warn_nomerge_attribute_ignored_in_stmt: Warning<
   "statement">,
   InGroup<IgnoredAttributes>;
 
+def err_double_check_expr: Error<
+  "invalid expression for if statement with `double_check` attribute">;
+
 def err_musttail_needs_trivial_args : Error<
   "tail call requires that the return value, all parameters, and any "
   "temporaries created by the expression are trivially destructible">;
