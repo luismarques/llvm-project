@@ -273,6 +273,36 @@ static Attr *handleMustTailAttr(Sema &S, Stmt *St, const ParsedAttr &A,
   return ::new (S.Context) MustTailAttr(S.Context, A);
 }
 
+static Attr *handleDoubleCheck(Sema &S, Stmt *St, const ParsedAttr &A,
+                               SourceRange Range) {
+  const Expr *Cond = cast<IfStmt>(St)->getCond();
+  bool Valid = false;
+  if (const BinaryOperator *CondBOp = dyn_cast<BinaryOperator>(Cond)) {
+    BinaryOperator::Opcode Op = CondBOp->getOpcode();
+    switch (Op) {
+    default:
+      break;
+    case BO_EQ:
+    case BO_NE:
+    case BO_GT:
+    case BO_GE:
+    case BO_LT:
+    case BO_LE: {
+      auto LHSType = CondBOp->getRHS()->getType();
+      auto RHSType = CondBOp->getRHS()->getType();
+      Valid = LHSType->isIntegerType() && RHSType->isIntegerType();
+      break;
+    }
+    }
+  }
+  if (!Valid) {
+    S.Diag(Cond->getBeginLoc(), diag::err_double_check_expr)
+        << A << Cond->getSourceRange();
+  }
+
+  return ::new (S.Context) DoubleCheckAttr(S.Context, A);
+}
+
 static Attr *handleLikely(Sema &S, Stmt *St, const ParsedAttr &A,
                           SourceRange Range) {
 
@@ -486,6 +516,8 @@ static Attr *ProcessStmtAttribute(Sema &S, Stmt *St, const ParsedAttr &A,
     return handleNoInlineAttr(S, St, A, Range);
   case ParsedAttr::AT_MustTail:
     return handleMustTailAttr(S, St, A, Range);
+  case ParsedAttr::AT_DoubleCheck:
+    return handleDoubleCheck(S, St, A, Range);
   case ParsedAttr::AT_Likely:
     return handleLikely(S, St, A, Range);
   case ParsedAttr::AT_Unlikely:

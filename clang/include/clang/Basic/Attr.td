@@ -1422,6 +1422,12 @@ def ExtVectorType : Attr {
   let PragmaAttributeSupport = 0;
 }
 
+def DoubleCheck : StmtAttr, TargetSpecificAttr<TargetRISCV> {
+  let Spellings = [Clang<"double_check">];
+  let Documentation = [DoubleCheckDocs];
+  let Subjects = SubjectList<[IfStmt], ErrorDiag, "if statements">;
+}
+
 def FallThrough : StmtAttr {
   let Spellings = [CXX11<"", "fallthrough", 201603>,
                    C2x<"", "fallthrough", 201910>,

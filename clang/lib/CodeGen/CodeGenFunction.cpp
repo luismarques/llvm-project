@@ -39,6 +39,7 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/FPEnv.h"
+#include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/MDBuilder.h"
@@ -1690,18 +1691,76 @@ void CodeGenFunction::EmitBranchToCounterBlock(
   EmitBranch(NextBlock);
 }
 
+static std::string DoubleCheckAsm(BinaryOperator::Opcode Op) {
+  std::string AsmStr;
+  switch (Op) {
+  default:
+    llvm_unreachable("unexpected binary operation");
+  case BO_EQ:
+    AsmStr += "bne $0, $1, $3\nbeq $0, $1, $2\n";
+    break;
+  case BO_NE:
+    AsmStr += "beq $0, $1, $3\nbne $0, $1, $2\n";
+    break;
+  case BO_GT:
+    AsmStr += "ble $0, $1, $3\nbgt $0, $1, $2\n";
+    break;
+  case BO_GE:
+    AsmStr += "blt $0, $1, $3\nbge $0, $1, $2\n";
+    break;
+  case BO_LT:
+    AsmStr += "bge $0, $1, $3\nblt $0, $1, $2\n";
+    break;
+  case BO_LE:
+    AsmStr += "bgt $0, $1, $3\nble $0, $1, $2\n";
+    break;
+  }
+  AsmStr += "unimp\nunimp";
+  return AsmStr;
+}
+
 /// EmitBranchOnBoolExpr - Emit a branch on a boolean condition (e.g. for an if
 /// statement) to the specified blocks.  Based on the condition, this might try
 /// to simplify the codegen of the conditional based on the branch.
 /// \param LH The value of the likelihood attribute on the True branch.
-void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
-                                           llvm::BasicBlock *TrueBlock,
-                                           llvm::BasicBlock *FalseBlock,
-                                           uint64_t TrueCount,
-                                           Stmt::Likelihood LH) {
+void CodeGenFunction::EmitBranchOnBoolExpr(
+    const Expr *Cond, llvm::BasicBlock *TrueBlock, llvm::BasicBlock *FalseBlock,
+    uint64_t TrueCount, Stmt::Likelihood LH, bool DoubleCheck) {
   Cond = Cond->IgnoreParens();
 
   if (const BinaryOperator *CondBOp = dyn_cast<BinaryOperator>(Cond)) {
+
+    if (DoubleCheck) {
+      llvm::BasicBlock *FallthroughBlock = createBasicBlock("asm.fallthrough");
+
+      llvm::Type *ResultType = VoidTy;
+      llvm::Type *BinOpType = Int32Ty;
+      std::vector<llvm::Type *> ArgTypes;
+      std::vector<llvm::Value *> Args;
+      SmallVector<llvm::BasicBlock *, 2> Transfer;
+      std::string Constraints = "r,r,!i,!i";
+
+      Transfer.push_back(TrueBlock);
+      Transfer.push_back(FalseBlock);
+
+      llvm::Value *BinOpValue = EmitScalarExpr(CondBOp->getLHS());
+      Args.push_back(BinOpValue);
+      ArgTypes.push_back(BinOpType);
+
+      BinOpValue = EmitScalarExpr(CondBOp->getRHS());
+      Args.push_back(BinOpValue);
+      ArgTypes.push_back(BinOpType);
+
+      llvm::FunctionType *FTy =
+          llvm::FunctionType::get(ResultType, ArgTypes, false);
+      llvm::InlineAsm *IA = llvm::InlineAsm::get(
+          FTy, DoubleCheckAsm(CondBOp->getOpcode()), Constraints,
+          /*HasSideEffect*/ true, /*IsAlignStack*/ false,
+          /*AsmDialect*/ llvm::InlineAsm::AD_ATT, /*HasUnwindClobber*/ false);
+      Builder.CreateCallBr(IA, FallthroughBlock, Transfer, Args);
+      EmitBlock(FallthroughBlock);
+      return;
+    }
 
     // Handle X && Y in a condition.
     if (CondBOp->getOpcode() == BO_LAnd) {

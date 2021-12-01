@@ -177,6 +177,10 @@ protected:
     /// True if this if statement has storage for an init statement.
     unsigned HasInit : 1;
 
+    /// True if this if statement has been marked with the
+    /// [[clang::double_check]] attributed.
+    unsigned HasDoubleCheck : 1;
+
     /// The location of the "if".
     SourceLocation IfLoc;
   };
@@ -2023,6 +2027,9 @@ public:
 
   /// True if this IfStmt has storage for an else statement.
   bool hasElseStorage() const { return IfStmtBits.HasElse; }
+
+  bool hasDoubleCheck() const { return IfStmtBits.HasDoubleCheck; }
+  void setDoubleCheck() { IfStmtBits.HasDoubleCheck = true; }
 
   Expr *getCond() {
     return reinterpret_cast<Expr *>(getTrailingObjects<Stmt *>()[condOffset()]);

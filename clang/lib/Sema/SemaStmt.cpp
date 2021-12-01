@@ -590,6 +590,10 @@ StmtResult Sema::BuildAttributedStmt(SourceLocation AttrsLoc,
         return SubStmt;
       }
       setFunctionHasMustTail();
+    } else if (A->getKind() == attr::DoubleCheck) {
+      IfStmt *IS = dyn_cast<IfStmt>(SubStmt);
+      assert(IS && "clang::double_check attribute in unexpected statement");
+      IS->setDoubleCheck();
     }
   }
 

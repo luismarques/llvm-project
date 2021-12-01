@@ -4577,7 +4577,8 @@ public:
   /// evaluate to true based on PGO data.
   void EmitBranchOnBoolExpr(const Expr *Cond, llvm::BasicBlock *TrueBlock,
                             llvm::BasicBlock *FalseBlock, uint64_t TrueCount,
-                            Stmt::Likelihood LH = Stmt::LH_None);
+                            Stmt::Likelihood LH = Stmt::LH_None,
+                            bool DoubleCheck = false);
 
   /// Given an assignment `*LHS = RHS`, emit a test that checks if \p RHS is
   /// nonnull, if \p LHS is marked _Nonnull.

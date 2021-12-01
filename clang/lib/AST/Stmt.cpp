@@ -929,6 +929,7 @@ IfStmt::IfStmt(const ASTContext &Ctx, SourceLocation IL, IfStatementKind Kind,
   IfStmtBits.HasElse = HasElse;
   IfStmtBits.HasVar = HasVar;
   IfStmtBits.HasInit = HasInit;
+  IfStmtBits.HasDoubleCheck = false;
 
   setStatementKind(Kind);
 
@@ -951,6 +952,7 @@ IfStmt::IfStmt(EmptyShell Empty, bool HasElse, bool HasVar, bool HasInit)
   IfStmtBits.HasElse = HasElse;
   IfStmtBits.HasVar = HasVar;
   IfStmtBits.HasInit = HasInit;
+  IfStmtBits.HasDoubleCheck = false;
 }
 
 IfStmt *IfStmt::Create(const ASTContext &Ctx, SourceLocation IL,

@@ -1888,6 +1888,19 @@ use the annotated ``[[nodiscard]]`` constructor or result in an annotated type.
   }];
 }
 
+def DoubleCheckDocs : Documentation {
+  let Category = DocCatStmt;
+  let Heading = "double_check";
+  let Content = [{
+The ``clang::double_check`` attribute is used to annotate `if` statements where
+the condition expression should be checked twice, as a mitigation for hardware
+attacks. This attribute is currently RISC-V specific and only applies to `if`
+statements with a binary expression where the operator is one of ``==``,
+``!=``, ``>``, ``>=``, ``<``, or ``<=`` and the operands are of integer type.
+
+  }];
+}
+
 def FallthroughDocs : Documentation {
   let Category = DocCatStmt;
   let Heading = "fallthrough";
