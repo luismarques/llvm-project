@@ -418,7 +418,11 @@ static bool ExecuteAssemblerImpl(AssemblerInvocation &Opts,
   } else if (Opts.RelocationModel == "pic") {
     PIC = true;
   } else {
-    assert(Opts.RelocationModel == "dynamic-no-pic" &&
+    assert((Opts.RelocationModel == "epic" ||
+            Opts.RelocationModel == "ropi" ||
+            Opts.RelocationModel == "rwpi" ||
+            Opts.RelocationModel == "ropi-rwpi" ||
+            Opts.RelocationModel == "dynamic-no-pic") &&
            "Invalid PIC model!");
     PIC = false;
   }

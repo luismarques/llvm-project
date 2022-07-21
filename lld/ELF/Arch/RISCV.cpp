@@ -39,6 +39,7 @@ public:
   void relocate(uint8_t *loc, const Relocation &rel,
                 uint64_t val) const override;
   bool relaxOnce(int pass) const override;
+  void transformEPICRel(uint8_t *loc, Relocation &rel) const override;
 };
 
 } // end anonymous namespace
@@ -238,6 +239,11 @@ RelType RISCV::getDynRel(RelType type) const {
                                      : static_cast<RelType>(R_RISCV_NONE);
 }
 
+static bool shouldMakePCRel(const Symbol &sym) {
+  auto section = sym.getOutputSection();
+  return (section->flags & SHF_WRITE) == 0;
+}
+
 RelExpr RISCV::getRelExpr(const RelType type, const Symbol &s,
                           const uint8_t *loc) const {
   switch (type) {
@@ -249,6 +255,9 @@ RelExpr RISCV::getRelExpr(const RelType type, const Symbol &s,
   case R_RISCV_LO12_I:
   case R_RISCV_LO12_S:
   case R_RISCV_RVC_LUI:
+  case R_RISCV_GPREL_HI20:
+  case R_RISCV_GPREL_LO12_I:
+  case R_RISCV_GPREL_LO12_S:
     return R_ABS;
   case R_RISCV_ADD8:
   case R_RISCV_ADD16:
@@ -293,6 +302,13 @@ RelExpr RISCV::getRelExpr(const RelType type, const Symbol &s,
   case R_RISCV_TPREL_ADD:
   case R_RISCV_RELAX:
     return config->relax ? R_RELAX_HINT : R_NONE;
+  case R_RISCV_GPREL_ADD:
+    return R_NONE;
+  case R_RISCV_EPIC_HI20:
+  case R_RISCV_EPIC_LO12_I:
+  case R_RISCV_EPIC_LO12_S:
+  case R_RISCV_EPIC_BASE_ADD:
+    return R_EPIC;
   default:
     error(getErrorLocation(loc) + "unknown relocation (" + Twine(type) +
           ") against symbol " + toString(s));
@@ -404,6 +420,7 @@ void RISCV::relocate(uint8_t *loc, const Relocation &rel, uint64_t val) const {
   case R_RISCV_TLS_GD_HI20:
   case R_RISCV_TLS_GOT_HI20:
   case R_RISCV_TPREL_HI20:
+  case R_RISCV_GPREL_HI20:
   case R_RISCV_HI20: {
     uint64_t hi = val + 0x800;
     checkInt(loc, SignExtend64(hi, bits) >> 12, 20, rel);
@@ -411,6 +428,7 @@ void RISCV::relocate(uint8_t *loc, const Relocation &rel, uint64_t val) const {
     return;
   }
 
+  case R_RISCV_GPREL_LO12_I:
   case R_RISCV_PCREL_LO12_I:
   case R_RISCV_TPREL_LO12_I:
   case R_RISCV_LO12_I: {
@@ -420,6 +438,7 @@ void RISCV::relocate(uint8_t *loc, const Relocation &rel, uint64_t val) const {
     return;
   }
 
+  case R_RISCV_GPREL_LO12_S:
   case R_RISCV_PCREL_LO12_S:
   case R_RISCV_TPREL_LO12_S:
   case R_RISCV_LO12_S: {
@@ -814,6 +833,93 @@ void elf::riscvFinalizeRelax(int passes) {
       }
     }
   }
+}
+
+// For R_RISCV_EPIC_LO12_{I,S}, the symbol actually points the corresponding
+// R_RISCV_EPIC_HI20 relocation, and the target VA is calculated using the
+// R_RISCV_EPIC_HI20's symbol.
+//
+// This function returns the R_RISCV_EPIC_HI20 relocation from
+// R_RISCV_EPIC_LO12's symbol and addend.
+static Relocation *getRISCVEPICHi20(const Symbol *sym, uint64_t addend) {
+  const Defined *d = cast<Defined>(sym);
+  if (!d->section) {
+    errorOrWarn("R_RISCV_EPIC_LO12_* relocation points to an absolute symbol: " +
+          sym->getName());
+    return nullptr;
+  }
+  InputSection *isec = cast<InputSection>(d->section);
+
+  if (addend != 0)
+    warn("non-zero addend in R_RISCV_EPIC_LO12_* relocation to " +
+         isec->getObjMsg(d->value) + " is ignored");
+
+  // Relocations are sorted by offset, so we can use std::equal_range to do
+  // binary search.
+  Relocation r;
+  r.offset = d->value;
+  auto range =
+      std::equal_range(isec->relocations.begin(), isec->relocations.end(), r,
+                       [](const Relocation &lhs, const Relocation &rhs) {
+                         return lhs.offset < rhs.offset;
+                       });
+
+  for (auto it = range.first; it != range.second; ++it)
+    // The R_RISCV_EPIC_HI20 relocation may have already been transformed into
+    // a R_RISCV_PCREL_HI20 or a R_RISCV_GPREL_HI20 relocation, so we also
+    // accept those.
+    if (it->type == R_RISCV_PCREL_HI20 || it->type == R_RISCV_GPREL_HI20 ||
+        it->type == R_RISCV_EPIC_HI20)
+      return &*it;
+
+  errorOrWarn("R_RISCV_EPIC_LO12_* relocation points to " +
+              isec->getObjMsg(d->value) +
+        " without an associated R_RISCV_EPIC_HI20_* relocation");
+  return nullptr;
+}
+
+void RISCV::transformEPICRel(uint8_t *loc, Relocation &rel) const {
+  switch (rel.type) {
+  case R_RISCV_EPIC_HI20:
+    if (shouldMakePCRel(*rel.sym)) {
+      uint32_t insn = read32le(loc);     // TODO: write only LSB?
+      write32le(loc, insn & 0xFFFFFF97); // LUI -> AUIPC
+      rel.type = R_RISCV_PCREL_HI20;
+    } else {
+      rel.type = R_RISCV_GPREL_HI20;
+    }
+    break;
+  case R_RISCV_EPIC_LO12_I: {
+    // TODO: can we have R_RISCV_PCREL_LO12_I before the corresponding R_RISCV_PCREL_HI20?
+    // if so, then the equivalent scenario might be problematic for a R_RISCV_GPREL_HI20/
+    // R_RISCV_EPIC_HI20.
+    auto hiRel = getRISCVEPICHi20(rel.sym, rel.addend);
+    if (shouldMakePCRel(*hiRel->sym))
+      rel.type = R_RISCV_PCREL_LO12_I;
+    else {
+      rel.type = R_RISCV_GPREL_LO12_I;
+      rel.sym = hiRel->sym;
+    }
+    break;
+  }
+  case R_RISCV_EPIC_LO12_S: {
+    auto hiRel = getRISCVEPICHi20(rel.sym, rel.addend);
+    if (shouldMakePCRel(*hiRel->sym))
+      rel.type = R_RISCV_PCREL_LO12_S;
+    else {
+      rel.type = R_RISCV_GPREL_LO12_S;
+      rel.sym = hiRel->sym;
+    }
+    break;
+  }
+  case R_RISCV_EPIC_BASE_ADD:
+    if (shouldMakePCRel(*rel.sym)) {
+      write32le(loc, itype(ADDI, 0, 0, 0)); // ADD -> NOP
+    }
+    rel.type = R_RISCV_NONE;
+    break;
+  }
+  rel.expr = getRelExpr(rel.type, *rel.sym, loc);
 }
 
 TargetInfo *elf::getRISCVTargetInfo() {

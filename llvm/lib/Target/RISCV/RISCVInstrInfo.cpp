@@ -1042,6 +1042,11 @@ unsigned RISCVInstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
                               *TM.getMCAsmInfo());
   }
 
+  if (Opcode == RISCV::PseudoLA) {
+    const auto &TM = MI.getParent()->getParent()->getTarget();
+    return TM.getRelocationModel() == Reloc::EPIC ? 12 : 8;
+  }
+
   if (MI.getParent() && MI.getParent()->getParent()) {
     const auto MF = MI.getMF();
     const auto &TM = static_cast<const RISCVTargetMachine &>(MF->getTarget());
@@ -1234,7 +1239,11 @@ RISCVInstrInfo::getSerializableDirectMachineOperandTargetFlags() const {
       {MO_TPREL_HI, "riscv-tprel-hi"},
       {MO_TPREL_ADD, "riscv-tprel-add"},
       {MO_TLS_GOT_HI, "riscv-tls-got-hi"},
-      {MO_TLS_GD_HI, "riscv-tls-gd-hi"}};
+      {MO_TLS_GD_HI, "riscv-tls-gd-hi"},
+      {MO_EPIC_HI, "riscv-epic-hi"},
+      {MO_EPIC_LO, "riscv-epic-lo"},
+      {MO_EPIC_BASE_ADD, "riscv-epic-base-add"},
+  };
   return makeArrayRef(TargetFlags);
 }
 bool RISCVInstrInfo::isFunctionSafeToOutlineFrom(

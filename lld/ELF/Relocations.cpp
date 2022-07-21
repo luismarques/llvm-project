@@ -211,7 +211,6 @@ static bool isRelExpr(RelExpr expr) {
                R_RISCV_PC_INDIRECT, R_PPC64_RELAX_GOT_PC>(expr);
 }
 
-
 static RelExpr toPlt(RelExpr expr) {
   switch (expr) {
   case R_PPC64_CALL:

@@ -975,12 +975,19 @@ void InputSectionBase::relocateAlloc(uint8_t *buf, uint8_t *bufEnd) {
   const TargetInfo &target = *elf::target;
   uint64_t lastPPCRelaxedRelocOff = UINT64_C(-1);
   AArch64Relaxer aarch64relaxer(relocations);
+
   for (size_t i = 0, size = relocations.size(); i != size; ++i) {
-    const Relocation &rel = relocations[i];
+    Relocation &rel = relocations[i];
     if (rel.expr == R_NONE)
       continue;
     uint64_t offset = rel.offset;
     uint8_t *bufLoc = buf + offset;
+    if (rel.expr == R_EPIC) {
+      target.transformEPICRel(bufLoc, rel);
+      assert(rel.expr != R_EPIC);
+      if (rel.expr == R_NONE)
+        continue;
+    }
 
     uint64_t secAddr = getOutputSection()->addr;
     if (auto *sec = dyn_cast<InputSection>(this))

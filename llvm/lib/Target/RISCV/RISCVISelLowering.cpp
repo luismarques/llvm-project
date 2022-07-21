@@ -934,7 +934,7 @@ RISCVTargetLowering::RISCVTargetLowering(const TargetMachine &TM,
   setMinFunctionAlignment(FunctionAlignment);
   setPrefFunctionAlignment(FunctionAlignment);
 
-  setMinimumJumpTableEntries(5);
+  setMinimumJumpTableEntries(isEPIC() ? INT_MAX : 5);
 
   // Jumps are expensive, compared to logic
   setJumpIsExpensive();
@@ -3776,8 +3776,7 @@ SDValue RISCVTargetLowering::getAddr(NodeTy *N, SelectionDAG &DAG,
                                      bool IsLocal) const {
   SDLoc DL(N);
   EVT Ty = getPointerTy(DAG.getDataLayout());
-
-  if (isPositionIndependent()) {
+  if (isPositionIndependent() || isEPIC()) {
     SDValue Addr = getTargetNode(N, DL, Ty, DAG, 0);
     if (IsLocal)
       // Use PC-relative addressing to access the symbol. This generates the
@@ -3821,12 +3820,43 @@ SDValue RISCVTargetLowering::getAddr(NodeTy *N, SelectionDAG &DAG,
   }
 }
 
+template SDValue RISCVTargetLowering::getAddr<GlobalAddressSDNode>(
+    GlobalAddressSDNode *N, SelectionDAG &DAG, bool IsLocal) const;
+template SDValue RISCVTargetLowering::getAddr<BlockAddressSDNode>(
+    BlockAddressSDNode *N, SelectionDAG &DAG, bool IsLocal) const;
+template SDValue RISCVTargetLowering::getAddr<ConstantPoolSDNode>(
+    ConstantPoolSDNode *N, SelectionDAG &DAG, bool IsLocal) const;
+template SDValue RISCVTargetLowering::getAddr<JumpTableSDNode>(
+    JumpTableSDNode *N, SelectionDAG &DAG, bool IsLocal) const;
+
+bool RISCVTargetLowering::isEPIC() const {
+  return getTargetMachine().getRelocationModel() == Reloc::EPIC;
+}
+
+bool RISCVTargetLowering::isLocalGlobalValue(const GlobalValue *GV) const {
+  if (isEPIC()) {
+    if (const auto *GA = dyn_cast<GlobalAlias>(GV)) {
+      if (!(GV = GA->getAliaseeObject()))
+        return false;
+    }
+    if (const auto *GIFunc = dyn_cast<GlobalIFunc>(GV)) {
+      // TODO: also handle ifuncs properly?
+      llvm_unreachable("TODO handle IFuncs for EPIC");
+    }
+    return isa<Function>(GV);
+  } else {
+    return getTargetMachine().shouldAssumeDSOLocal(*GV->getParent(), GV);
+  }
+}
+
 SDValue RISCVTargetLowering::lowerGlobalAddress(SDValue Op,
                                                 SelectionDAG &DAG) const {
   SDLoc DL(Op);
   GlobalAddressSDNode *N = cast<GlobalAddressSDNode>(Op);
   assert(N->getOffset() == 0 && "unexpected offset in global node");
-  return getAddr(N, DAG, N->getGlobal()->isDSOLocal());
+  const GlobalValue *GV = N->getGlobal();
+  bool IsLocal = isLocalGlobalValue(GV);
+  return getAddr(N, DAG, IsLocal);
 }
 
 SDValue RISCVTargetLowering::lowerBlockAddress(SDValue Op,
@@ -11533,7 +11563,7 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
     const GlobalValue *GV = S->getGlobal();
 
     unsigned OpFlags = RISCVII::MO_CALL;
-    if (!getTargetMachine().shouldAssumeDSOLocal(*GV->getParent(), GV))
+    if (!isLocalGlobalValue(GV))
       OpFlags = RISCVII::MO_PLT;
 
     Callee = DAG.getTargetGlobalAddress(GV, DL, PtrVT, 0, OpFlags);

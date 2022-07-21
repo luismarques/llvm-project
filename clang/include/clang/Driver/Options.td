@@ -2657,6 +2657,10 @@ defm plt : BoolFOption<"plt",
   CodeGenOpts<"NoPLT">, DefaultFalse,
   NegFlag<SetTrue, [CC1Option], "Use GOT indirection instead of PLT to make external function calls (x86 only)">,
   PosFlag<SetFalse>>;
+defm epic : BoolFOption<"epic",
+  LangOpts<"EPIC">, DefaultFalse,
+  PosFlag<SetTrue, [CC1Option], "Generate position independent code for embedded systems (RISC-V only)">,
+  NegFlag<SetFalse>>;
 defm ropi : BoolFOption<"ropi",
   LangOpts<"ROPI">, DefaultFalse,
   PosFlag<SetTrue, [CC1Option], "Generate read-only position independent code (ARM only)">,
@@ -5273,9 +5277,9 @@ def msave_temp_labels : Flag<["-"], "msave-temp-labels">,
            "on compiler-generated code.">,
   MarshallingInfoFlag<CodeGenOpts<"SaveTempLabels">>;
 def mrelocation_model : Separate<["-"], "mrelocation-model">,
-  HelpText<"The relocation model to use">, Values<"static,pic,ropi,rwpi,ropi-rwpi,dynamic-no-pic">,
+  HelpText<"The relocation model to use">, Values<"static,pic,epic,ropi,rwpi,ropi-rwpi,dynamic-no-pic">,
   NormalizedValuesScope<"llvm::Reloc">,
-  NormalizedValues<["Static", "PIC_", "ROPI", "RWPI", "ROPI_RWPI", "DynamicNoPIC"]>,
+  NormalizedValues<["Static", "PIC_", "EPIC", "ROPI", "RWPI", "ROPI_RWPI", "DynamicNoPIC"]>,
   MarshallingInfoEnum<CodeGenOpts<"RelocationModel">, "PIC_">;
 def fno_math_builtin : Flag<["-"], "fno-math-builtin">,
   HelpText<"Disable implicit builtin knowledge of math functions">,

@@ -143,6 +143,12 @@ class RISCVAsmParser : public MCTargetAsmParser {
   // 'add' is an overloaded mnemonic.
   bool checkPseudoAddTPRel(MCInst &Inst, OperandVector &Operands);
 
+  // Checks that a PseudoAddGPRel is using x3/gp in its first input operand.
+  // Enforcing this using a restricted register class for the second input
+  // operand of PseudoAddGPRel results in a poor diagnostic due to the fact
+  // 'add' is an overloaded mnemonic.
+  bool checkPseudoAddGPRel(MCInst &Inst, OperandVector &Operands);
+
   // Check instruction constraints.
   bool validateInstruction(MCInst &Inst, OperandVector &Operands);
 
@@ -435,6 +441,17 @@ public:
            VK == RISCVMCExpr::VK_RISCV_TPREL_ADD;
   }
 
+  bool isGPRelAddSymbol() const {
+    int64_t Imm;
+    RISCVMCExpr::VariantKind VK = RISCVMCExpr::VK_RISCV_None;
+    // Must be of 'immediate' type but not a constant.
+    if (!isImm() || evaluateConstantImm(getImm(), Imm, VK))
+      return false;
+    return RISCVAsmParser::classifySymbolRef(getImm(), VK) &&
+           (VK == RISCVMCExpr::VK_RISCV_GPREL_ADD ||
+            VK == RISCVMCExpr::VK_RISCV_EPIC_BASE_ADD);
+  }
+
   bool isCSRSystemRegister() const { return isSystemRegister(); }
 
   bool isVTypeImm(unsigned N) const {
@@ -684,7 +701,9 @@ public:
     return IsValid && ((IsConstantImm && VK == RISCVMCExpr::VK_RISCV_None) ||
                        VK == RISCVMCExpr::VK_RISCV_LO ||
                        VK == RISCVMCExpr::VK_RISCV_PCREL_LO ||
-                       VK == RISCVMCExpr::VK_RISCV_TPREL_LO);
+                       VK == RISCVMCExpr::VK_RISCV_GPREL_LO ||
+                       VK == RISCVMCExpr::VK_RISCV_TPREL_LO ||
+                       VK == RISCVMCExpr::VK_RISCV_EPIC_LO);
   }
 
   bool isSImm12Lsb0() const { return isBareSimmNLsb0<12>(); }
@@ -721,7 +740,9 @@ public:
     if (!IsConstantImm) {
       IsValid = RISCVAsmParser::classifySymbolRef(getImm(), VK);
       return IsValid && (VK == RISCVMCExpr::VK_RISCV_HI ||
-                         VK == RISCVMCExpr::VK_RISCV_TPREL_HI);
+                         VK == RISCVMCExpr::VK_RISCV_GPREL_HI ||
+                         VK == RISCVMCExpr::VK_RISCV_TPREL_HI ||
+                         VK == RISCVMCExpr::VK_RISCV_EPIC_HI);
     } else {
       return isUInt<20>(Imm) && (VK == RISCVMCExpr::VK_RISCV_None ||
                                  VK == RISCVMCExpr::VK_RISCV_HI ||
@@ -1202,8 +1223,8 @@ bool RISCVAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_InvalidSImm12:
     return generateImmOutOfRangeError(
         Operands, ErrorInfo, -(1 << 11), (1 << 11) - 1,
-        "operand must be a symbol with %lo/%pcrel_lo/%tprel_lo modifier or an "
-        "integer in the range");
+        "operand must be a symbol with %lo/%pcrel_lo/%tprel_lo/%got_gprel_lo/"
+        "%gprel_lo/%epic_lo modifier or an integer in the range");
   case Match_InvalidSImm12Lsb0:
     return generateImmOutOfRangeError(
         Operands, ErrorInfo, -(1 << 11), (1 << 11) - 2,
@@ -1219,8 +1240,9 @@ bool RISCVAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_InvalidUImm20LUI:
     return generateImmOutOfRangeError(Operands, ErrorInfo, 0, (1 << 20) - 1,
                                       "operand must be a symbol with "
-                                      "%hi/%tprel_hi modifier or an integer in "
-                                      "the range");
+                                      "%hi/%tprel_hi/%gprel_hi/%got_gprel_hi/"
+                                      "%epic_hi modifier or an integer in the "
+                                      "range");
   case Match_InvalidUImm20AUIPC:
     return generateImmOutOfRangeError(
         Operands, ErrorInfo, 0, (1 << 20) - 1,
@@ -1262,6 +1284,10 @@ bool RISCVAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_InvalidTPRelAddSymbol: {
     SMLoc ErrorLoc = ((RISCVOperand &)*Operands[ErrorInfo]).getStartLoc();
     return Error(ErrorLoc, "operand must be a symbol with %tprel_add modifier");
+  }
+  case Match_InvalidGPRelAddSymbol: {
+    SMLoc ErrorLoc = ((RISCVOperand &)*Operands[ErrorInfo]).getStartLoc();
+    return Error(ErrorLoc, "operand must be a symbol with %gprel_add modifier");
   }
   case Match_InvalidVTypeI: {
     SMLoc ErrorLoc = ((RISCVOperand &)*Operands[ErrorInfo]).getStartLoc();
@@ -2571,6 +2597,19 @@ bool RISCVAsmParser::checkPseudoAddTPRel(MCInst &Inst,
   return false;
 }
 
+bool RISCVAsmParser::checkPseudoAddGPRel(MCInst &Inst,
+                                         OperandVector &Operands) {
+  assert(Inst.getOpcode() == RISCV::PseudoAddGPRel && "Invalid instruction");
+  assert(Inst.getOperand(1).isReg() && "Unexpected second operand kind");
+  if (Inst.getOperand(1).getReg() != RISCV::X3) {
+    SMLoc ErrorLoc = ((RISCVOperand &)*Operands[3]).getStartLoc();
+    return Error(ErrorLoc, "the first input operand must be gp/x3 when using "
+                           "%gprel_add or %epic_base_add modifiers");
+  }
+
+  return false;
+}
+
 std::unique_ptr<RISCVOperand> RISCVAsmParser::defaultMaskRegOp() const {
   return RISCVOperand::createReg(RISCV::NoRegister, llvm::SMLoc(),
                                  llvm::SMLoc(), isRV64());
@@ -2729,6 +2768,10 @@ bool RISCVAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
     return false;
   case RISCV::PseudoAddTPRel:
     if (checkPseudoAddTPRel(Inst, Operands))
+      return true;
+    break;
+  case RISCV::PseudoAddGPRel:
+    if (checkPseudoAddGPRel(Inst, Operands))
       return true;
     break;
   case RISCV::PseudoSEXT_B:
