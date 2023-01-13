@@ -2110,3 +2110,9 @@ def TuneSiFive7 : SubtargetFeature<"sifive7", "RISCVProcFamily", "SiFive7",
 def TuneVentanaVeyron : SubtargetFeature<"ventana-veyron", "RISCVProcFamily", "VentanaVeyron",
                                          "Ventana Veyron-Series processors">;
 
+def FeatureGuards
+    : SubtargetFeature<"guards", "HasGuards", "true",
+                       "Jump guards hardening">;
+def HasGuards : Predicate<"Subtarget->hasGuards()">,
+                           AssemblerPredicate<(all_of FeatureGuards),
+                           "Jump guards hardening">;
