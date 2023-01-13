@@ -29,6 +29,7 @@ add_llvm_target(RISCVCodeGen
   RISCVInstructionSelector.cpp
   RISCVISelDAGToDAG.cpp
   RISCVISelLowering.cpp
+  RISCVJumpGuardsHardener.cpp
   RISCVLegalizerInfo.cpp
   RISCVMCInstLower.cpp
   RISCVMergeBaseOffset.cpp
