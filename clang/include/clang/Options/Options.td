@@ -5466,6 +5466,11 @@ def mno_xcheri_norvc : Flag<["-"], "mno-xcheri-norvc">, Group<m_riscv_Features_G
   HelpText<"Enable using compressed CHERI instructions">;
 def mxcheri_rvc : Flag<["-"], "mxcheri-rvc">, Alias<mno_xcheri_norvc>;
 
+def mguards : Flag<["-"], "mguards">, Group<m_riscv_Features_Group>,
+  HelpText<"Enable control flow guards">;
+def mno_guards: Flag<["-"], "mno-guards">, Group<m_riscv_Features_Group>,
+  HelpText<"Disable control flow guards">;
+
 def munaligned_access : Flag<["-"], "munaligned-access">, Group<m_Group>,
   HelpText<"Allow memory accesses to be unaligned (AArch32/MIPSr6 only)">;
 def mno_unaligned_access : Flag<["-"], "mno-unaligned-access">, Group<m_Group>,

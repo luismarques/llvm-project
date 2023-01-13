@@ -148,6 +148,7 @@ extern "C" LLVM_ABI LLVM_EXTERNAL_VISIBILITY void LLVMInitializeRISCVTarget() {
   initializeRISCVRedundantCopyEliminationPass(*PR);
   initializeRISCVAsmPrinterPass(*PR);
   initializeRISCVPromoteConstantPass(*PR);
+  initializeRISCVJumpGuardsHardenerPass(*PR);
 }
 
 static Reloc::Model getEffectiveRelocModel(std::optional<Reloc::Model> RM) {
@@ -592,6 +593,11 @@ void RISCVPassConfig::addPreEmitPass2() {
   }
   addPass(
       createRISCVExpandPseudoPass(getTM<RISCVTargetMachine>().ImportedObjects));
+
+  if (TM->getMCSubtargetInfo()->hasFeature(RISCV::FeatureGuards)) {
+    addPass(createRISCVJumpGuardsHardenerPass());
+    addPass(&BranchRelaxationPassID);
+  }
 
   // Schedule the expansion of AMOs at the last possible moment, avoiding the
   // possibility for other passes to break the requirements for forward
