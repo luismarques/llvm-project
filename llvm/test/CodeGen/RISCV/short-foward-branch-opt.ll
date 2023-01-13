@@ -412,17 +412,17 @@ define void @sextw_removal_ccor(i1 %c, i32 signext %arg, i32 signext %arg1, i32 
 ; SFB-NEXT:    mv s0, a3
 ; SFB-NEXT:    andi a0, a0, 1
 ; SFB-NEXT:    mv s1, a2
-; SFB-NEXT:    beqz a0, .LBB15_4
-; SFB-NEXT:  # %bb.3: # %bb
+; SFB-NEXT:    beqz a0, .LBB15_2
+; SFB-NEXT:  # %bb.1: # %bb
 ; SFB-NEXT:    or s0, a3, a1
-; SFB-NEXT:  .LBB15_4: # %bb
-; SFB-NEXT:  .LBB15_1: # %bb2
+; SFB-NEXT:  .LBB15_2: # %bb
+; SFB-NEXT:  .LBB15_3: # %bb2
 ; SFB-NEXT:    # =>This Inner Loop Header: Depth=1
 ; SFB-NEXT:    mv a0, s0
 ; SFB-NEXT:    call bar@plt
 ; SFB-NEXT:    sllw s0, s0, s1
-; SFB-NEXT:    bnez a0, .LBB15_1
-; SFB-NEXT:  # %bb.2: # %bb7
+; SFB-NEXT:    bnez a0, .LBB15_3
+; SFB-NEXT:  # %bb.4: # %bb7
 ; SFB-NEXT:    ld ra, 24(sp) # 8-byte Folded Reload
 ; SFB-NEXT:    ld s0, 16(sp) # 8-byte Folded Reload
 ; SFB-NEXT:    ld s1, 8(sp) # 8-byte Folded Reload
@@ -479,17 +479,17 @@ define void @sextw_removal_ccaddw(i1 %c, i32 signext %arg, i32 signext %arg1, i3
 ; SFB-NEXT:    mv s0, a1
 ; SFB-NEXT:    andi a0, a0, 1
 ; SFB-NEXT:    mv s1, a2
-; SFB-NEXT:    beqz a0, .LBB16_4
-; SFB-NEXT:  # %bb.3: # %bb
+; SFB-NEXT:    beqz a0, .LBB16_2
+; SFB-NEXT:  # %bb.1: # %bb
 ; SFB-NEXT:    addw s0, a1, a3
-; SFB-NEXT:  .LBB16_4: # %bb
-; SFB-NEXT:  .LBB16_1: # %bb2
+; SFB-NEXT:  .LBB16_2: # %bb
+; SFB-NEXT:  .LBB16_3: # %bb2
 ; SFB-NEXT:    # =>This Inner Loop Header: Depth=1
 ; SFB-NEXT:    mv a0, s0
 ; SFB-NEXT:    call bar@plt
 ; SFB-NEXT:    sllw s0, s0, s1
-; SFB-NEXT:    bnez a0, .LBB16_1
-; SFB-NEXT:  # %bb.2: # %bb7
+; SFB-NEXT:    bnez a0, .LBB16_3
+; SFB-NEXT:  # %bb.4: # %bb7
 ; SFB-NEXT:    ld ra, 24(sp) # 8-byte Folded Reload
 ; SFB-NEXT:    ld s0, 16(sp) # 8-byte Folded Reload
 ; SFB-NEXT:    ld s1, 8(sp) # 8-byte Folded Reload

@@ -32,6 +32,7 @@ add_llvm_target(RISCVCodeGen
   RISCVISelLowering.cpp
   RISCVMachineFunctionInfo.cpp
   RISCVMacroFusion.cpp
+  RISCVJumpGuardsHardener.cpp
   RISCVMCInstLower.cpp
   RISCVMergeBaseOffset.cpp
   RISCVRedundantCopyElimination.cpp

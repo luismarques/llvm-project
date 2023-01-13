@@ -10,6 +10,13 @@
 // RISC-V subtarget features and instruction predicates.
 //===----------------------------------------------------------------------===//
 
+def FeatureGuards
+    : SubtargetFeature<"guards", "HasGuards", "true",
+                       "Jump guards hardening">;
+def HasGuards : Predicate<"Subtarget->hasGuards()">,
+                           AssemblerPredicate<(all_of FeatureGuards),
+                           "Jump guards hardening">;
+
 def FeatureStdExtM
     : SubtargetFeature<"m", "HasStdExtM", "true",
                        "'M' (Integer Multiplication and Division)">;

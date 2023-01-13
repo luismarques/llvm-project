@@ -43,20 +43,20 @@ define i32 @relax_jal(i1 %a) nounwind {
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    addi sp, sp, -16
 ; CHECK-NEXT:    andi a0, a0, 1
-; CHECK-NEXT:    bnez a0, .LBB1_1
-; CHECK-NEXT:  # %bb.4:
-; CHECK-NEXT:    jump .LBB1_2, a0
-; CHECK-NEXT:  .LBB1_1: # %iftrue
+; CHECK-NEXT:    bnez a0, .LBB1_2
+; CHECK-NEXT:  # %bb.1:
+; CHECK-NEXT:    jump .LBB1_3, a0
+; CHECK-NEXT:  .LBB1_2: # %iftrue
 ; CHECK-NEXT:    #APP
 ; CHECK-NEXT:    #NO_APP
 ; CHECK-NEXT:    #APP
 ; CHECK-NEXT:    .zero 1048576
 ; CHECK-NEXT:    #NO_APP
-; CHECK-NEXT:    j .LBB1_3
-; CHECK-NEXT:  .LBB1_2: # %jmp
+; CHECK-NEXT:    j .LBB1_4
+; CHECK-NEXT:  .LBB1_3: # %jmp
 ; CHECK-NEXT:    #APP
 ; CHECK-NEXT:    #NO_APP
-; CHECK-NEXT:  .LBB1_3: # %tail
+; CHECK-NEXT:  .LBB1_4: # %tail
 ; CHECK-NEXT:    li a0, 1
 ; CHECK-NEXT:    addi sp, sp, 16
 ; CHECK-NEXT:    ret
@@ -197,18 +197,18 @@ define void @relax_jal_spill_32() {
 ; CHECK-RV32-NEXT:    #APP
 ; CHECK-RV32-NEXT:    li t6, 31
 ; CHECK-RV32-NEXT:    #NO_APP
-; CHECK-RV32-NEXT:    beq t5, t6, .LBB2_1
-; CHECK-RV32-NEXT:  # %bb.3:
+; CHECK-RV32-NEXT:    beq t5, t6, .LBB2_2
+; CHECK-RV32-NEXT:  # %bb.1:
 ; CHECK-RV32-NEXT:    sw s11, 0(sp)
-; CHECK-RV32-NEXT:    jump .LBB2_4, s11
-; CHECK-RV32-NEXT:  .LBB2_1: # %branch_1
+; CHECK-RV32-NEXT:    jump .LBB2_3, s11
+; CHECK-RV32-NEXT:  .LBB2_2: # %branch_1
 ; CHECK-RV32-NEXT:    #APP
 ; CHECK-RV32-NEXT:    .zero 1048576
 ; CHECK-RV32-NEXT:    #NO_APP
-; CHECK-RV32-NEXT:    j .LBB2_2
-; CHECK-RV32-NEXT:  .LBB2_4: # %branch_2
+; CHECK-RV32-NEXT:    j .LBB2_4
+; CHECK-RV32-NEXT:  .LBB2_3: # %branch_2
 ; CHECK-RV32-NEXT:    lw s11, 0(sp)
-; CHECK-RV32-NEXT:  .LBB2_2: # %branch_2
+; CHECK-RV32-NEXT:  .LBB2_4: # %branch_2
 ; CHECK-RV32-NEXT:    #APP
 ; CHECK-RV32-NEXT:    # reg use ra
 ; CHECK-RV32-NEXT:    #NO_APP
@@ -427,14 +427,14 @@ define void @relax_jal_spill_32() {
 ; CHECK-RV64-NEXT:    #NO_APP
 ; CHECK-RV64-NEXT:    sd t6, 8(sp) # 8-byte Folded Spill
 ; CHECK-RV64-NEXT:    sext.w t6, t6
-; CHECK-RV64-NEXT:    beq t5, t6, .LBB2_1
-; CHECK-RV64-NEXT:  # %bb.3:
-; CHECK-RV64-NEXT:    jump .LBB2_2, t5
-; CHECK-RV64-NEXT:  .LBB2_1: # %branch_1
+; CHECK-RV64-NEXT:    beq t5, t6, .LBB2_2
+; CHECK-RV64-NEXT:  # %bb.1:
+; CHECK-RV64-NEXT:    jump .LBB2_3, t5
+; CHECK-RV64-NEXT:  .LBB2_2: # %branch_1
 ; CHECK-RV64-NEXT:    #APP
 ; CHECK-RV64-NEXT:    .zero 1048576
 ; CHECK-RV64-NEXT:    #NO_APP
-; CHECK-RV64-NEXT:  .LBB2_2: # %branch_2
+; CHECK-RV64-NEXT:  .LBB2_3: # %branch_2
 ; CHECK-RV64-NEXT:    #APP
 ; CHECK-RV64-NEXT:    # reg use ra
 ; CHECK-RV64-NEXT:    #NO_APP
@@ -728,18 +728,18 @@ define void @relax_jal_spill_32_adjust_spill_slot() {
 ; CHECK-RV32-NEXT:    #APP
 ; CHECK-RV32-NEXT:    li t6, 31
 ; CHECK-RV32-NEXT:    #NO_APP
-; CHECK-RV32-NEXT:    beq t5, t6, .LBB3_1
-; CHECK-RV32-NEXT:  # %bb.3:
+; CHECK-RV32-NEXT:    beq t5, t6, .LBB3_2
+; CHECK-RV32-NEXT:  # %bb.1:
 ; CHECK-RV32-NEXT:    sw s11, 0(sp)
-; CHECK-RV32-NEXT:    jump .LBB3_4, s11
-; CHECK-RV32-NEXT:  .LBB3_1: # %branch_1
+; CHECK-RV32-NEXT:    jump .LBB3_3, s11
+; CHECK-RV32-NEXT:  .LBB3_2: # %branch_1
 ; CHECK-RV32-NEXT:    #APP
 ; CHECK-RV32-NEXT:    .zero 1048576
 ; CHECK-RV32-NEXT:    #NO_APP
-; CHECK-RV32-NEXT:    j .LBB3_2
-; CHECK-RV32-NEXT:  .LBB3_4: # %branch_2
+; CHECK-RV32-NEXT:    j .LBB3_4
+; CHECK-RV32-NEXT:  .LBB3_3: # %branch_2
 ; CHECK-RV32-NEXT:    lw s11, 0(sp)
-; CHECK-RV32-NEXT:  .LBB3_2: # %branch_2
+; CHECK-RV32-NEXT:  .LBB3_4: # %branch_2
 ; CHECK-RV32-NEXT:    #APP
 ; CHECK-RV32-NEXT:    # reg use ra
 ; CHECK-RV32-NEXT:    #NO_APP
@@ -975,14 +975,14 @@ define void @relax_jal_spill_32_adjust_spill_slot() {
 ; CHECK-RV64-NEXT:    sd t6, -16(t0) # 8-byte Folded Spill
 ; CHECK-RV64-NEXT:    ld t0, 0(sp)
 ; CHECK-RV64-NEXT:    sext.w t6, t6
-; CHECK-RV64-NEXT:    beq t5, t6, .LBB3_1
-; CHECK-RV64-NEXT:  # %bb.3:
-; CHECK-RV64-NEXT:    jump .LBB3_2, t5
-; CHECK-RV64-NEXT:  .LBB3_1: # %branch_1
+; CHECK-RV64-NEXT:    beq t5, t6, .LBB3_2
+; CHECK-RV64-NEXT:  # %bb.1:
+; CHECK-RV64-NEXT:    jump .LBB3_3, t5
+; CHECK-RV64-NEXT:  .LBB3_2: # %branch_1
 ; CHECK-RV64-NEXT:    #APP
 ; CHECK-RV64-NEXT:    .zero 1048576
 ; CHECK-RV64-NEXT:    #NO_APP
-; CHECK-RV64-NEXT:  .LBB3_2: # %branch_2
+; CHECK-RV64-NEXT:  .LBB3_3: # %branch_2
 ; CHECK-RV64-NEXT:    #APP
 ; CHECK-RV64-NEXT:    # reg use ra
 ; CHECK-RV64-NEXT:    #NO_APP
@@ -1339,14 +1339,14 @@ define void @relax_jal_spill_64() {
 ; CHECK-RV32-NEXT:    sw a2, 16(sp) # 4-byte Folded Spill
 ; CHECK-RV32-NEXT:    xor a2, t5, a2
 ; CHECK-RV32-NEXT:    or a1, a2, a1
-; CHECK-RV32-NEXT:    beqz a1, .LBB4_1
-; CHECK-RV32-NEXT:  # %bb.3:
-; CHECK-RV32-NEXT:    jump .LBB4_2, a1
-; CHECK-RV32-NEXT:  .LBB4_1: # %branch_1
+; CHECK-RV32-NEXT:    beqz a1, .LBB4_2
+; CHECK-RV32-NEXT:  # %bb.1:
+; CHECK-RV32-NEXT:    jump .LBB4_3, a1
+; CHECK-RV32-NEXT:  .LBB4_2: # %branch_1
 ; CHECK-RV32-NEXT:    #APP
 ; CHECK-RV32-NEXT:    .zero 1048576
 ; CHECK-RV32-NEXT:    #NO_APP
-; CHECK-RV32-NEXT:  .LBB4_2: # %branch_2
+; CHECK-RV32-NEXT:  .LBB4_3: # %branch_2
 ; CHECK-RV32-NEXT:    #APP
 ; CHECK-RV32-NEXT:    # reg use ra
 ; CHECK-RV32-NEXT:    #NO_APP
@@ -1612,18 +1612,18 @@ define void @relax_jal_spill_64() {
 ; CHECK-RV64-NEXT:    #APP
 ; CHECK-RV64-NEXT:    li t6, 31
 ; CHECK-RV64-NEXT:    #NO_APP
-; CHECK-RV64-NEXT:    beq t5, t6, .LBB4_1
-; CHECK-RV64-NEXT:  # %bb.3:
+; CHECK-RV64-NEXT:    beq t5, t6, .LBB4_2
+; CHECK-RV64-NEXT:  # %bb.1:
 ; CHECK-RV64-NEXT:    sd s11, 0(sp)
-; CHECK-RV64-NEXT:    jump .LBB4_4, s11
-; CHECK-RV64-NEXT:  .LBB4_1: # %branch_1
+; CHECK-RV64-NEXT:    jump .LBB4_3, s11
+; CHECK-RV64-NEXT:  .LBB4_2: # %branch_1
 ; CHECK-RV64-NEXT:    #APP
 ; CHECK-RV64-NEXT:    .zero 1048576
 ; CHECK-RV64-NEXT:    #NO_APP
-; CHECK-RV64-NEXT:    j .LBB4_2
-; CHECK-RV64-NEXT:  .LBB4_4: # %branch_2
+; CHECK-RV64-NEXT:    j .LBB4_4
+; CHECK-RV64-NEXT:  .LBB4_3: # %branch_2
 ; CHECK-RV64-NEXT:    ld s11, 0(sp)
-; CHECK-RV64-NEXT:  .LBB4_2: # %branch_2
+; CHECK-RV64-NEXT:  .LBB4_4: # %branch_2
 ; CHECK-RV64-NEXT:    #APP
 ; CHECK-RV64-NEXT:    # reg use ra
 ; CHECK-RV64-NEXT:    #NO_APP
@@ -2074,14 +2074,14 @@ define void @relax_jal_spill_64_adjust_spill_slot() {
 ; CHECK-RV32-NEXT:    sw a2, -200(a3) # 4-byte Folded Spill
 ; CHECK-RV32-NEXT:    xor a2, t5, a2
 ; CHECK-RV32-NEXT:    or a1, a2, a1
-; CHECK-RV32-NEXT:    beqz a1, .LBB5_1
-; CHECK-RV32-NEXT:  # %bb.3:
-; CHECK-RV32-NEXT:    jump .LBB5_2, a1
-; CHECK-RV32-NEXT:  .LBB5_1: # %branch_1
+; CHECK-RV32-NEXT:    beqz a1, .LBB5_2
+; CHECK-RV32-NEXT:  # %bb.1:
+; CHECK-RV32-NEXT:    jump .LBB5_3, a1
+; CHECK-RV32-NEXT:  .LBB5_2: # %branch_1
 ; CHECK-RV32-NEXT:    #APP
 ; CHECK-RV32-NEXT:    .zero 1048576
 ; CHECK-RV32-NEXT:    #NO_APP
-; CHECK-RV32-NEXT:  .LBB5_2: # %branch_2
+; CHECK-RV32-NEXT:  .LBB5_3: # %branch_2
 ; CHECK-RV32-NEXT:    #APP
 ; CHECK-RV32-NEXT:    # reg use ra
 ; CHECK-RV32-NEXT:    #NO_APP
@@ -2460,18 +2460,18 @@ define void @relax_jal_spill_64_adjust_spill_slot() {
 ; CHECK-RV64-NEXT:    #APP
 ; CHECK-RV64-NEXT:    li t6, 31
 ; CHECK-RV64-NEXT:    #NO_APP
-; CHECK-RV64-NEXT:    beq t5, t6, .LBB5_1
-; CHECK-RV64-NEXT:  # %bb.3:
+; CHECK-RV64-NEXT:    beq t5, t6, .LBB5_2
+; CHECK-RV64-NEXT:  # %bb.1:
 ; CHECK-RV64-NEXT:    sd s11, 0(sp)
-; CHECK-RV64-NEXT:    jump .LBB5_4, s11
-; CHECK-RV64-NEXT:  .LBB5_1: # %branch_1
+; CHECK-RV64-NEXT:    jump .LBB5_3, s11
+; CHECK-RV64-NEXT:  .LBB5_2: # %branch_1
 ; CHECK-RV64-NEXT:    #APP
 ; CHECK-RV64-NEXT:    .zero 1048576
 ; CHECK-RV64-NEXT:    #NO_APP
-; CHECK-RV64-NEXT:    j .LBB5_2
-; CHECK-RV64-NEXT:  .LBB5_4: # %branch_2
+; CHECK-RV64-NEXT:    j .LBB5_4
+; CHECK-RV64-NEXT:  .LBB5_3: # %branch_2
 ; CHECK-RV64-NEXT:    ld s11, 0(sp)
-; CHECK-RV64-NEXT:  .LBB5_2: # %branch_2
+; CHECK-RV64-NEXT:  .LBB5_4: # %branch_2
 ; CHECK-RV64-NEXT:    #APP
 ; CHECK-RV64-NEXT:    # reg use ra
 ; CHECK-RV64-NEXT:    #NO_APP
@@ -2765,42 +2765,42 @@ define void @relax_jal_spill_32_restore_block_correspondence() {
 ; CHECK-RV32-NEXT:    #APP
 ; CHECK-RV32-NEXT:    li t6, 31
 ; CHECK-RV32-NEXT:    #NO_APP
-; CHECK-RV32-NEXT:    bne t5, t6, .LBB6_1
-; CHECK-RV32-NEXT:  # %bb.7: # %entry
+; CHECK-RV32-NEXT:    bne t5, t6, .LBB6_2
+; CHECK-RV32-NEXT:  # %bb.1: # %entry
 ; CHECK-RV32-NEXT:    sw s11, 0(sp)
-; CHECK-RV32-NEXT:    jump .LBB6_8, s11
-; CHECK-RV32-NEXT:  .LBB6_1: # %cond_2
-; CHECK-RV32-NEXT:    bne t3, t4, .LBB6_2
-; CHECK-RV32-NEXT:  # %bb.9: # %cond_2
+; CHECK-RV32-NEXT:    jump .LBB6_7, s11
+; CHECK-RV32-NEXT:  .LBB6_2: # %cond_2
+; CHECK-RV32-NEXT:    bne t3, t4, .LBB6_4
+; CHECK-RV32-NEXT:  # %bb.3: # %cond_2
 ; CHECK-RV32-NEXT:    sw s11, 0(sp)
-; CHECK-RV32-NEXT:    jump .LBB6_10, s11
-; CHECK-RV32-NEXT:  .LBB6_2: # %cond_3
-; CHECK-RV32-NEXT:    bne t1, t2, .LBB6_3
-; CHECK-RV32-NEXT:  # %bb.11: # %cond_3
+; CHECK-RV32-NEXT:    jump .LBB6_9, s11
+; CHECK-RV32-NEXT:  .LBB6_4: # %cond_3
+; CHECK-RV32-NEXT:    bne t1, t2, .LBB6_6
+; CHECK-RV32-NEXT:  # %bb.5: # %cond_3
 ; CHECK-RV32-NEXT:    sw s11, 0(sp)
-; CHECK-RV32-NEXT:    jump .LBB6_12, s11
-; CHECK-RV32-NEXT:  .LBB6_3: # %space
+; CHECK-RV32-NEXT:    jump .LBB6_11, s11
+; CHECK-RV32-NEXT:  .LBB6_6: # %space
 ; CHECK-RV32-NEXT:    #APP
 ; CHECK-RV32-NEXT:    .zero 1048576
 ; CHECK-RV32-NEXT:    #NO_APP
-; CHECK-RV32-NEXT:    j .LBB6_4
-; CHECK-RV32-NEXT:  .LBB6_8: # %dest_1
+; CHECK-RV32-NEXT:    j .LBB6_8
+; CHECK-RV32-NEXT:  .LBB6_7: # %dest_1
 ; CHECK-RV32-NEXT:    lw s11, 0(sp)
-; CHECK-RV32-NEXT:  .LBB6_4: # %dest_1
+; CHECK-RV32-NEXT:  .LBB6_8: # %dest_1
 ; CHECK-RV32-NEXT:    #APP
 ; CHECK-RV32-NEXT:    # dest 1
 ; CHECK-RV32-NEXT:    #NO_APP
-; CHECK-RV32-NEXT:    j .LBB6_5
-; CHECK-RV32-NEXT:  .LBB6_10: # %dest_2
+; CHECK-RV32-NEXT:    j .LBB6_10
+; CHECK-RV32-NEXT:  .LBB6_9: # %dest_2
 ; CHECK-RV32-NEXT:    lw s11, 0(sp)
-; CHECK-RV32-NEXT:  .LBB6_5: # %dest_2
+; CHECK-RV32-NEXT:  .LBB6_10: # %dest_2
 ; CHECK-RV32-NEXT:    #APP
 ; CHECK-RV32-NEXT:    # dest 2
 ; CHECK-RV32-NEXT:    #NO_APP
-; CHECK-RV32-NEXT:    j .LBB6_6
-; CHECK-RV32-NEXT:  .LBB6_12: # %dest_3
+; CHECK-RV32-NEXT:    j .LBB6_12
+; CHECK-RV32-NEXT:  .LBB6_11: # %dest_3
 ; CHECK-RV32-NEXT:    lw s11, 0(sp)
-; CHECK-RV32-NEXT:  .LBB6_6: # %dest_3
+; CHECK-RV32-NEXT:  .LBB6_12: # %dest_3
 ; CHECK-RV32-NEXT:    #APP
 ; CHECK-RV32-NEXT:    # dest 3
 ; CHECK-RV32-NEXT:    #NO_APP
@@ -3022,34 +3022,34 @@ define void @relax_jal_spill_32_restore_block_correspondence() {
 ; CHECK-RV64-NEXT:    sext.w t6, t6
 ; CHECK-RV64-NEXT:    sd t5, 16(sp) # 8-byte Folded Spill
 ; CHECK-RV64-NEXT:    sext.w t5, t5
-; CHECK-RV64-NEXT:    bne t5, t6, .LBB6_1
-; CHECK-RV64-NEXT:  # %bb.7: # %entry
-; CHECK-RV64-NEXT:    jump .LBB6_4, t5
-; CHECK-RV64-NEXT:  .LBB6_1: # %cond_2
+; CHECK-RV64-NEXT:    bne t5, t6, .LBB6_2
+; CHECK-RV64-NEXT:  # %bb.1: # %entry
+; CHECK-RV64-NEXT:    jump .LBB6_7, t5
+; CHECK-RV64-NEXT:  .LBB6_2: # %cond_2
 ; CHECK-RV64-NEXT:    sext.w t5, t4
 ; CHECK-RV64-NEXT:    sext.w t6, t3
-; CHECK-RV64-NEXT:    bne t6, t5, .LBB6_2
-; CHECK-RV64-NEXT:  # %bb.9: # %cond_2
-; CHECK-RV64-NEXT:    jump .LBB6_5, t5
-; CHECK-RV64-NEXT:  .LBB6_2: # %cond_3
+; CHECK-RV64-NEXT:    bne t6, t5, .LBB6_4
+; CHECK-RV64-NEXT:  # %bb.3: # %cond_2
+; CHECK-RV64-NEXT:    jump .LBB6_8, t5
+; CHECK-RV64-NEXT:  .LBB6_4: # %cond_3
 ; CHECK-RV64-NEXT:    sext.w t5, t2
 ; CHECK-RV64-NEXT:    sext.w t6, t1
-; CHECK-RV64-NEXT:    bne t6, t5, .LBB6_3
-; CHECK-RV64-NEXT:  # %bb.11: # %cond_3
-; CHECK-RV64-NEXT:    jump .LBB6_6, t5
-; CHECK-RV64-NEXT:  .LBB6_3: # %space
+; CHECK-RV64-NEXT:    bne t6, t5, .LBB6_6
+; CHECK-RV64-NEXT:  # %bb.5: # %cond_3
+; CHECK-RV64-NEXT:    jump .LBB6_9, t5
+; CHECK-RV64-NEXT:  .LBB6_6: # %space
 ; CHECK-RV64-NEXT:    #APP
 ; CHECK-RV64-NEXT:    .zero 1048576
 ; CHECK-RV64-NEXT:    #NO_APP
-; CHECK-RV64-NEXT:  .LBB6_4: # %dest_1
+; CHECK-RV64-NEXT:  .LBB6_7: # %dest_1
 ; CHECK-RV64-NEXT:    #APP
 ; CHECK-RV64-NEXT:    # dest 1
 ; CHECK-RV64-NEXT:    #NO_APP
-; CHECK-RV64-NEXT:  .LBB6_5: # %dest_2
+; CHECK-RV64-NEXT:  .LBB6_8: # %dest_2
 ; CHECK-RV64-NEXT:    #APP
 ; CHECK-RV64-NEXT:    # dest 2
 ; CHECK-RV64-NEXT:    #NO_APP
-; CHECK-RV64-NEXT:  .LBB6_6: # %dest_3
+; CHECK-RV64-NEXT:  .LBB6_9: # %dest_3
 ; CHECK-RV64-NEXT:    #APP
 ; CHECK-RV64-NEXT:    # dest 3
 ; CHECK-RV64-NEXT:    #NO_APP

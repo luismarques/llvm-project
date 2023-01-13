@@ -14,6 +14,9 @@ include "llvm/Target/Target.td"
 
 include "RISCVFeatures.td"
 
+// def FeatureGuards : SubtargetFeature<"guards", "EnableGuards",
+//                                      "true", "Enable control flow guards">;
+
 //===----------------------------------------------------------------------===//
 // Named operands for CSR instructions.
 //===----------------------------------------------------------------------===//
