@@ -133,6 +133,9 @@ FunctionPass *createRISCVVMV0EliminationPass();
 void initializeRISCVVMV0EliminationPass(PassRegistry &);
 
 void initializeRISCVAsmPrinterPass(PassRegistry &);
+
+FunctionPass *createRISCVJumpGuardsHardenerPass();
+void initializeRISCVJumpGuardsHardenerPass(PassRegistry &);
 } // namespace llvm
 
 #endif
