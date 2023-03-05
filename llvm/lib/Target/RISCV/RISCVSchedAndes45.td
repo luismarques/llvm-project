@@ -1043,8 +1043,14 @@ foreach mx = SchedMxList in {
 // Unsupported extensions
 defm : UnsupportedSchedQ;
 defm : UnsupportedSchedZabha;
+defm : UnsupportedSchedZbe;
+defm : UnsupportedSchedZbf;
 defm : UnsupportedSchedZbkb;
 defm : UnsupportedSchedZbkx;
+defm : UnsupportedSchedZbm;
+defm : UnsupportedSchedZbp;
+defm : UnsupportedSchedZbr;
+defm : UnsupportedSchedZbt;
 defm : UnsupportedSchedZfa;
 defm : UnsupportedSchedZvk;
 defm : UnsupportedSchedXsf;

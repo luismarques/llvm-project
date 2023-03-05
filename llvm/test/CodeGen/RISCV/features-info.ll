@@ -35,6 +35,12 @@
 ; CHECK-NEXT:   experimental-xrivosvizip         - 'XRivosVizip' (Rivos Vector Register Zips).
 ; CHECK-NEXT:   experimental-xsfmclic            - 'XSfmclic' (SiFive CLIC Machine-mode CSRs).
 ; CHECK-NEXT:   experimental-xsfsclic            - 'XSfsclic' (SiFive CLIC Supervisor-mode CSRs).
+; CHECK-NEXT:   experimental-zbe                 - 'Zbe' ('Zbe' (Extract-Deposit 'Zb' Instructions)).
+; CHECK-NEXT:   experimental-zbf                 - 'Zbf' ('Zbf' (Bit-Field 'Zb' Instructions)).
+; CHECK-NEXT:   experimental-zbm                 - 'Zbm' ('Zbm' (Matrix 'Zb' Instructions)).
+; CHECK-NEXT:   experimental-zbp                 - 'Zbp' ('Zbp' (Permutation 'Zb' Instructions)).
+; CHECK-NEXT:   experimental-zbr                 - 'Zbr' ('Zbr' (Polynomial Reduction 'Zb' Instructions)).
+; CHECK-NEXT:   experimental-zbt                 - 'Zbt' ('Zbt' (Ternary 'Zb' Instructions)).
 ; CHECK-NEXT:   experimental-zibi                - 'Zibi' (Branch with Immediate).
 ; CHECK-NEXT:   experimental-zicfilp             - 'Zicfilp' (Landing pad).
 ; CHECK-NEXT:   experimental-zicfiss             - 'Zicfiss' (Shadow stack).
