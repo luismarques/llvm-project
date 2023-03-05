@@ -181,10 +181,36 @@ def HasStdExtZbkx : Predicate<"Subtarget->hasStdExtZbkx()">,
                              AssemblerPredicate<(all_of FeatureStdExtZbkx),
                              "'Zbkx' (Crossbar permutation instructions)">;
 
+def FeatureStdExtZbp
+    : SubtargetFeature<"experimental-zbp", "HasStdExtZbp", "true",
+                       "'Zbp' (Permutation 'Zb' Instructions)">;
+def HasStdExtZbp : Predicate<"Subtarget->hasStdExtZbp()">,
+                             AssemblerPredicate<(all_of FeatureStdExtZbp),
+                             "'Zbp' (Permutation 'Zb' Instructions)">;
+
+def HasStdExtZbpOrZbkx
+    : Predicate<"Subtarget->hasStdExtZbp() || Subtarget->hasStdExtZbkx()">,
+                AssemblerPredicate<(any_of FeatureStdExtZbp, FeatureStdExtZbkx),
+                                   "'Zbp' (Permutation 'Zb' Instructions) or "
+                                   "'Zbkx' (Crossbar permutation instructions)">;
+
+def HasStdExtZbpOrZbkb
+    : Predicate<"Subtarget->hasStdExtZbp() || Subtarget->hasStdExtZbkb()">,
+                AssemblerPredicate<(any_of FeatureStdExtZbp, FeatureStdExtZbkb),
+                                   "'Zbp' (Permutation 'Zb' Instructions) or "
+                                   "'Zbkb' (Bitmanip instructions for Cryptography)">;
+
 def HasStdExtZbbOrZbkb
     : Predicate<"Subtarget->hasStdExtZbb() || Subtarget->hasStdExtZbkb()">,
                 AssemblerPredicate<(any_of FeatureStdExtZbb, FeatureStdExtZbkb),
                                    "'Zbb' (Basic Bit-Manipulation) or "
+                                   "'Zbkb' (Bitmanip instructions for Cryptography)">;
+
+def HasStdExtZbbOrZbpOrZbkb
+    : Predicate<"Subtarget->hasStdExtZbb() || Subtarget->hasStdExtZbp() || Subtarget->hasStdExtZbkb()">,
+                AssemblerPredicate<(any_of FeatureStdExtZbb, FeatureStdExtZbp, FeatureStdExtZbkb),
+                                   "'Zbb' (Basic Bit-Manipulation) or "
+                                   "'Zbp' (Permutation 'Zb' Instructions) or "
                                    "'Zbkb' (Bitmanip instructions for Cryptography)">;
 
 // The Carry-less multiply subextension for cryptography is a subset of basic
@@ -205,6 +231,49 @@ def HasStdExtZbcOrZbkc
                                    "'Zbc' (Carry-Less Multiplication) or "
                                    "'Zbkc' (Carry-less multiply instructions "
                                    "for Cryptography)">;
+
+def FeatureStdExtZbe
+    : SubtargetFeature<"experimental-zbe", "HasStdExtZbe", "true",
+                       "'Zbe' (Extract-Deposit 'Zb' Instructions)">;
+def HasStdExtZbe : Predicate<"Subtarget->hasStdExtZbe()">,
+                             AssemblerPredicate<(all_of FeatureStdExtZbe),
+                             "'Zbe' (Extract-Deposit 'Zb' Instructions)">;
+
+def FeatureStdExtZbf
+    : SubtargetFeature<"experimental-zbf", "HasStdExtZbf", "true",
+                       "'Zbf' (Bit-Field 'Zb' Instructions)">;
+def HasStdExtZbf : Predicate<"Subtarget->hasStdExtZbf()">,
+                             AssemblerPredicate<(all_of FeatureStdExtZbf),
+                             "'Zbf' (Bit-Field 'Zb' Instructions)">;
+
+def FeatureStdExtZbm
+    : SubtargetFeature<"experimental-zbm", "HasStdExtZbm", "true",
+                       "'Zbm' (Matrix 'Zb' Instructions)">;
+def HasStdExtZbm : Predicate<"Subtarget->hasStdExtZbm()">,
+                             AssemblerPredicate<(all_of FeatureStdExtZbm),
+                             "'Zbm' (Matrix 'Zb' Instructions)">;
+
+def FeatureStdExtZbr
+    : SubtargetFeature<"experimental-zbr", "HasStdExtZbr", "true",
+                       "'Zbr' (Polynomial Reduction 'Zb' Instructions)">;
+def HasStdExtZbr : Predicate<"Subtarget->hasStdExtZbr()">,
+                             AssemblerPredicate<(all_of FeatureStdExtZbr),
+                             "'Zbr' (Polynomial Reduction 'Zb' Instructions)">;
+
+// Some instructions belong to both the basic and the permutation
+// subextensions. They should be enabled if either has been specified.
+def HasStdExtZbbOrZbp
+    : Predicate<"Subtarget->hasStdExtZbb() || Subtarget->hasStdExtZbp()">,
+                AssemblerPredicate<(any_of FeatureStdExtZbb, FeatureStdExtZbp),
+                                   "'Zbb' (Basic Bit-Manipulation) or "
+                                   "'Zbp' (Permutation 'Zb' Instructions)">;
+
+def FeatureStdExtZbt
+    : SubtargetFeature<"experimental-zbt", "HasStdExtZbt", "true",
+                       "'Zbt' (Ternary 'Zb' Instructions)">;
+def HasStdExtZbt : Predicate<"Subtarget->hasStdExtZbt()">,
+                             AssemblerPredicate<(all_of FeatureStdExtZbt),
+                             "'Zbt' (Ternary 'Zb' Instructions)">;
 
 def FeatureStdExtZknd
     : SubtargetFeature<"zknd", "HasStdExtZknd", "true",
