@@ -3127,9 +3127,10 @@ bool RISCVAsmParser::parseDirectiveOption() {
         break;
       }
 
+      Arch.consume_back("0p93");
       if (isDigit(Arch.back()))
         return Error(
-            Loc, "extension version number parsing not currently implemented");
+            Loc, "invalid extension version number");
 
       std::string Feature = RISCVISAInfo::getTargetFeatureForExtension(Arch);
       if (!enableExperimentalExtension() &&
