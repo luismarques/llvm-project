@@ -13,8 +13,39 @@
 # CHECK: :[[#@LINE+1]]:13: error: expected newline
 .option rvc foo
 
-# CHECK: :[[#@LINE+1]]:12: warning: unknown option, expected 'push', 'pop', 'rvc', 'norvc', 'relax' or 'norelax'
+# CHECK: :[[#@LINE+1]]:23: error: unexpected token, expected + or -
+.option arch, +f, +d, rv32ifd, -d
+
+# CHECK: :[[#@LINE+1]]:22: error: unexpected token, expected end of statement
+.option arch, rv32ifd, +f, +d
+
+# CHECK: :[[#@LINE+1]]:16: error: unexpected token, expected identifier
+.option arch, +"c"
+
+# CHECK: :[[#@LINE+1]]:16: error: unknown extension
+.option arch, +x
+
+# CHECK: :[[#@LINE+1]]:16: error: unexpected token, expected identifier
+.option arch, +
+
+# CHECK: :[[#@LINE+1]]:18: error: unexpected token, expected end of statement
+.option arch, +c foo
+
+# CHECK: :[[#@LINE+1]]:16: error: Extension version number parsing not currently implemented
+.option arch, +c2p0
+
+.option arch, +d
+# CHECK: :[[#@LINE+1]]:17: error: Can't disable f extension, d extension requires f extension be enabled
+.option arch, -f
+
+# CHECK: :[[#@LINE+1]]:13: error: expected newline
+.option rvc foo
+
+# CHECK: :[[#@LINE+1]]:12: warning: unknown option, expected 'push', 'pop', 'rvc', 'norvc', 'arch', 'relax' or 'norelax'
 .option bar
+
+# CHECK: :[[#@LINE+1]]:16: error: unknown extension
+.option arch, -i
 
 # CHECK: :[[#@LINE+1]]:12: error: .option pop with no .option push
 .option pop
