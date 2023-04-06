@@ -2160,15 +2160,31 @@ bool RISCVAsmParser::parseDirectiveOption() {
 
       StringRef ExtStr = Parser.getTok().getString();
 
+      bool Experimental = ExtStr.consume_back("0p93");
       if (ExtStr.find_if(isDigit) != StringRef::npos)
         return Error(
             Parser.getTok().getLoc(),
-            "Extension version number parsing not currently implemented");
+            "invalid extension version number");
+
+      std::string ExtStr_ = ExtStr.str();
+      if (Experimental) {
+        ExtStr_ = "experimental-" + ExtStr_;
+        ExtStr = ExtStr_;
+      }
 
       ArrayRef<SubtargetFeatureKV> KVArray(RISCVFeatureKV);
       auto Ext = llvm::lower_bound(KVArray, ExtStr);
-      if (Ext == KVArray.end() || StringRef(Ext->Key) != ExtStr)
-        return Error(Parser.getTok().getLoc(), "unknown extension");
+      if (Ext == KVArray.end() || StringRef(Ext->Key) != ExtStr) {
+        ExtStr_ = "experimental-" + ExtStr_;
+        ExtStr = ExtStr_;
+        Ext = llvm::lower_bound(KVArray, ExtStr);
+        if (Ext == KVArray.end() || StringRef(Ext->Key) != ExtStr)
+          return Error(Parser.getTok().getLoc(), "unknown extension");
+        else
+          return Error(
+              Parser.getTok().getLoc(),
+              "experimental extension requires explicit version number");
+      }
 
       Parser.Lex(); // Eat arch string
       bool HasComma = getTok().is(AsmToken::Comma);

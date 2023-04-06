@@ -31,7 +31,7 @@
 # CHECK: :[[#@LINE+1]]:18: error: unexpected token, expected end of statement
 .option arch, +c foo
 
-# CHECK: :[[#@LINE+1]]:16: error: Extension version number parsing not currently implemented
+# CHECK: :[[#@LINE+1]]:16: error: invalid extension version number
 .option arch, +c2p0
 
 .option arch, +d
