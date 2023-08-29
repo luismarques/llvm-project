@@ -999,7 +999,7 @@ RISCVTargetLowering::RISCVTargetLowering(const TargetMachine &TM,
   setMinFunctionAlignment(FunctionAlignment);
   setPrefFunctionAlignment(FunctionAlignment);
 
-  setMinimumJumpTableEntries(isEPIC() ? INT_MAX : 5);
+  setMinimumJumpTableEntries(5);
 
   // Jumps are expensive, compared to logic
   setJumpIsExpensive();
@@ -13970,6 +13970,7 @@ unsigned RISCVTargetLowering::getJumpTableEncoding() const {
   // If we are using the small code model, we can reduce size of jump table
   // entry to 4 bytes.
   if (Subtarget.is64Bit() && !isPositionIndependent() &&
+      getTargetMachine().getRelocationModel() != Reloc::EPIC &&
       getTargetMachine().getCodeModel() == CodeModel::Small) {
     return MachineJumpTableInfo::EK_Custom32;
   }
