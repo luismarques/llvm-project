@@ -331,7 +331,9 @@ void MCObjectFileInfo::initMachOMCObjectFileInfo(const Triple &T) {
   TLSExtraDataSection = TLSTLVSection;
 }
 
-void MCObjectFileInfo::initELFMCObjectFileInfo(const Triple &T, bool Large) {
+void MCObjectFileInfo::initELFMCObjectFileInfo(const Triple &T, bool Large,
+                                               bool EPIC) {
+  EmbeddedPositionIndependent = EPIC;
   switch (T.getArch()) {
   case Triple::mips:
   case Triple::mipsel:
@@ -1040,8 +1042,9 @@ void MCObjectFileInfo::initDXContainerObjectFileInfo(const Triple &T) {
 MCObjectFileInfo::~MCObjectFileInfo() = default;
 
 void MCObjectFileInfo::initMCObjectFileInfo(MCContext &MCCtx, bool PIC,
-                                            bool LargeCodeModel) {
+                                            bool LargeCodeModel, bool EPIC) {
   PositionIndependent = PIC;
+  EmbeddedPositionIndependent = EPIC;
   Ctx = &MCCtx;
 
   // Common.
@@ -1069,7 +1072,7 @@ void MCObjectFileInfo::initMCObjectFileInfo(MCContext &MCCtx, bool PIC,
     initCOFFMCObjectFileInfo(TheTriple);
     break;
   case MCContext::IsELF:
-    initELFMCObjectFileInfo(TheTriple, LargeCodeModel);
+    initELFMCObjectFileInfo(TheTriple, LargeCodeModel, EPIC);
     break;
   case MCContext::IsGOFF:
     initGOFFMCObjectFileInfo(TheTriple);

@@ -62,6 +62,7 @@ struct RISCVOperand;
 
 struct ParserOptionsSet {
   bool IsPicEnabled;
+  bool IsEpicEnabled;
 };
 
 class RISCVAsmParser : public MCTargetAsmParser {
@@ -137,6 +138,9 @@ class RISCVAsmParser : public MCTargetAsmParser {
                          const MCExpr *Symbol, RISCVMCExpr::VariantKind VKHi,
                          unsigned SecondOpcode, SMLoc IDLoc, MCStreamer &Out);
 
+  void emitEpicLoadAddress(MCOperand DestReg, const MCExpr *Symbol, SMLoc IDLoc,
+                           MCStreamer &Out);
+
   // Helper to emit pseudo instruction "lla" used in PC-rel addressing.
   void emitLoadLocalAddress(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out);
 
@@ -170,6 +174,12 @@ class RISCVAsmParser : public MCTargetAsmParser {
   // operand of PseudoAddTPRel results in a poor diagnostic due to the fact
   // 'add' is an overloaded mnemonic.
   bool checkPseudoAddTPRel(MCInst &Inst, OperandVector &Operands);
+
+  // Checks that a PseudoAddGPRel is using x3/gp in its first input operand.
+  // Enforcing this using a restricted register class for the second input
+  // operand of PseudoAddGPRel results in a poor diagnostic due to the fact
+  // 'add' is an overloaded mnemonic.
+  bool checkPseudoAddGPRel(MCInst &Inst, OperandVector &Operands);
 
   // Check instruction constraints.
   bool validateInstruction(MCInst &Inst, OperandVector &Operands);
@@ -304,6 +314,7 @@ public:
 
     const MCObjectFileInfo *MOFI = Parser.getContext().getObjectFileInfo();
     ParserOptions.IsPicEnabled = MOFI->isPositionIndependent();
+    ParserOptions.IsEpicEnabled = MOFI->isEmbeddedPositionIndependent();
 
     if (AddBuildAttributes)
       getTargetStreamer().emitTargetAttributes(STI, /*EmitStackAlign*/ false);
@@ -532,6 +543,17 @@ public:
       return false;
     return RISCVAsmParser::classifySymbolRef(getImm(), VK) &&
            VK == RISCVMCExpr::VK_RISCV_TPREL_ADD;
+  }
+
+  bool isGPRelAddSymbol() const {
+    int64_t Imm;
+    RISCVMCExpr::VariantKind VK = RISCVMCExpr::VK_RISCV_None;
+    // Must be of 'immediate' type but not a constant.
+    if (!isImm() || evaluateConstantImm(getImm(), Imm, VK))
+      return false;
+    return RISCVAsmParser::classifySymbolRef(getImm(), VK) &&
+           (VK == RISCVMCExpr::VK_RISCV_GPREL_ADD ||
+            VK == RISCVMCExpr::VK_RISCV_EPIC_BASE_ADD);
   }
 
   bool isCSRSystemRegister() const { return isSystemRegister(); }
@@ -837,7 +859,9 @@ public:
     return IsValid && ((IsConstantImm && VK == RISCVMCExpr::VK_RISCV_None) ||
                        VK == RISCVMCExpr::VK_RISCV_LO ||
                        VK == RISCVMCExpr::VK_RISCV_PCREL_LO ||
-                       VK == RISCVMCExpr::VK_RISCV_TPREL_LO);
+                       VK == RISCVMCExpr::VK_RISCV_GPREL_LO ||
+                       VK == RISCVMCExpr::VK_RISCV_TPREL_LO ||
+                       VK == RISCVMCExpr::VK_RISCV_EPIC_LO);
   }
 
   bool isSImm12Lsb0() const { return isBareSimmNLsb0<12>(); }
@@ -874,7 +898,9 @@ public:
     if (!IsConstantImm) {
       IsValid = RISCVAsmParser::classifySymbolRef(getImm(), VK);
       return IsValid && (VK == RISCVMCExpr::VK_RISCV_HI ||
-                         VK == RISCVMCExpr::VK_RISCV_TPREL_HI);
+                         VK == RISCVMCExpr::VK_RISCV_GPREL_HI ||
+                         VK == RISCVMCExpr::VK_RISCV_TPREL_HI ||
+                         VK == RISCVMCExpr::VK_RISCV_EPIC_HI);
     } else {
       return isUInt<20>(Imm) && (VK == RISCVMCExpr::VK_RISCV_None ||
                                  VK == RISCVMCExpr::VK_RISCV_HI ||
@@ -1459,8 +1485,8 @@ bool RISCVAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_InvalidSImm12:
     return generateImmOutOfRangeError(
         Operands, ErrorInfo, -(1 << 11), (1 << 11) - 1,
-        "operand must be a symbol with %lo/%pcrel_lo/%tprel_lo modifier or an "
-        "integer in the range");
+        "operand must be a symbol with %lo/%pcrel_lo/%tprel_lo/%got_gprel_lo/"
+        "%gprel_lo/%epic_lo modifier or an integer in the range");
   case Match_InvalidSImm12Lsb0:
     return generateImmOutOfRangeError(
         Operands, ErrorInfo, -(1 << 11), (1 << 11) - 2,
@@ -1476,8 +1502,9 @@ bool RISCVAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_InvalidUImm20LUI:
     return generateImmOutOfRangeError(Operands, ErrorInfo, 0, (1 << 20) - 1,
                                       "operand must be a symbol with "
-                                      "%hi/%tprel_hi modifier or an integer in "
-                                      "the range");
+                                      "%hi/%tprel_hi/%gprel_hi/%got_gprel_hi/"
+                                      "%epic_hi modifier or an integer in the "
+                                      "range");
   case Match_InvalidUImm20AUIPC:
     return generateImmOutOfRangeError(
         Operands, ErrorInfo, 0, (1 << 20) - 1,
@@ -1516,6 +1543,10 @@ bool RISCVAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_InvalidRTZArg: {
     SMLoc ErrorLoc = ((RISCVOperand &)*Operands[ErrorInfo]).getStartLoc();
     return Error(ErrorLoc, "operand must be 'rtz' floating-point rounding mode");
+  }
+  case Match_InvalidGPRelAddSymbol: {
+    SMLoc ErrorLoc = ((RISCVOperand &)*Operands[ErrorInfo]).getStartLoc();
+    return Error(ErrorLoc, "operand must be a symbol with %gprel_add modifier");
   }
   case Match_InvalidVTypeI: {
     SMLoc ErrorLoc = ((RISCVOperand &)*Operands[ErrorInfo]).getStartLoc();
@@ -3033,6 +3064,38 @@ void RISCVAsmParser::emitAuipcInstPair(MCOperand DestReg, MCOperand TmpReg,
                           .addExpr(RefToLinkTmpLabel));
 }
 
+void RISCVAsmParser::emitEpicLoadAddress(MCOperand DestReg,
+                                         const MCExpr *Symbol, SMLoc IDLoc,
+                                         MCStreamer &Out) {
+  MCContext &Ctx = getContext();
+
+  MCSymbol *TmpLabel = Ctx.createNamedTempSymbol("epic_hi");
+  Out.emitLabel(TmpLabel);
+
+  const RISCVMCExpr *SymbolHi =
+      RISCVMCExpr::create(Symbol, RISCVMCExpr::VK_RISCV_EPIC_HI, Ctx);
+  emitToStreamer(
+      Out, MCInstBuilder(RISCV::LUI).addOperand(DestReg).addExpr(SymbolHi));
+
+  MCOperand GPReg = MCOperand::createReg(RISCV::X3);
+  const RISCVMCExpr *SymbolAdd =
+      RISCVMCExpr::create(Symbol, RISCVMCExpr::VK_RISCV_GPREL_ADD, Ctx);
+  emitToStreamer(Out, MCInstBuilder(RISCV::PseudoAddGPRel)
+                          .addOperand(DestReg)
+                          .addOperand(GPReg)
+                          .addOperand(DestReg)
+                          .addExpr(SymbolAdd));
+
+  const MCExpr *RefToLinkTmpLabel =
+      RISCVMCExpr::create(MCSymbolRefExpr::create(TmpLabel, Ctx),
+                          RISCVMCExpr::VK_RISCV_EPIC_LO, Ctx);
+
+  emitToStreamer(Out, MCInstBuilder(RISCV::ADDI)
+                          .addOperand(DestReg)
+                          .addOperand(DestReg)
+                          .addExpr(RefToLinkTmpLabel));
+}
+
 void RISCVAsmParser::emitLoadLocalAddress(MCInst &Inst, SMLoc IDLoc,
                                           MCStreamer &Out) {
   // The load local address pseudo-instruction "lla" is used in PC-relative
@@ -3043,6 +3106,10 @@ void RISCVAsmParser::emitLoadLocalAddress(MCInst &Inst, SMLoc IDLoc,
   //             ADDI rdest, rdest, %pcrel_lo(TmpLabel)
   MCOperand DestReg = Inst.getOperand(0);
   const MCExpr *Symbol = Inst.getOperand(1).getExpr();
+  if (ParserOptions.IsEpicEnabled) {
+    emitEpicLoadAddress(DestReg, Symbol, IDLoc, Out);
+    return;
+  }
   emitAuipcInstPair(DestReg, DestReg, Symbol, RISCVMCExpr::VK_RISCV_PCREL_HI,
                     RISCV::ADDI, IDLoc, Out);
 }
@@ -3058,8 +3125,11 @@ void RISCVAsmParser::emitLoadGlobalAddress(MCInst &Inst, SMLoc IDLoc,
   MCOperand DestReg = Inst.getOperand(0);
   const MCExpr *Symbol = Inst.getOperand(1).getExpr();
   unsigned SecondOpcode = isRV64() ? RISCV::LD : RISCV::LW;
-  emitAuipcInstPair(DestReg, DestReg, Symbol, RISCVMCExpr::VK_RISCV_GOT_HI,
-                    SecondOpcode, IDLoc, Out);
+  if (ParserOptions.IsEpicEnabled)
+    emitEpicLoadAddress(DestReg, Symbol, IDLoc, Out);
+  else
+    emitAuipcInstPair(DestReg, DestReg, Symbol, RISCVMCExpr::VK_RISCV_GOT_HI,
+                      SecondOpcode, IDLoc, Out);
 }
 
 void RISCVAsmParser::emitLoadAddress(MCInst &Inst, SMLoc IDLoc,
@@ -3241,6 +3311,19 @@ bool RISCVAsmParser::checkPseudoAddTPRel(MCInst &Inst,
     SMLoc ErrorLoc = ((RISCVOperand &)*Operands[3]).getStartLoc();
     return Error(ErrorLoc, "the second input operand must be tp/x4 when using "
                            "%tprel_add modifier");
+  }
+
+  return false;
+}
+
+bool RISCVAsmParser::checkPseudoAddGPRel(MCInst &Inst,
+                                         OperandVector &Operands) {
+  assert(Inst.getOpcode() == RISCV::PseudoAddGPRel && "Invalid instruction");
+  assert(Inst.getOperand(1).isReg() && "Unexpected second operand kind");
+  if (Inst.getOperand(1).getReg() != RISCV::X3) {
+    SMLoc ErrorLoc = ((RISCVOperand &)*Operands[3]).getStartLoc();
+    return Error(ErrorLoc, "the first input operand must be gp/x3 when using "
+                           "%gprel_add or %epic_base_add modifiers");
   }
 
   return false;
@@ -3490,6 +3573,10 @@ bool RISCVAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
     return false;
   case RISCV::PseudoAddTPRel:
     if (checkPseudoAddTPRel(Inst, Operands))
+      return true;
+    break;
+  case RISCV::PseudoAddGPRel:
+    if (checkPseudoAddGPRel(Inst, Operands))
       return true;
     break;
   case RISCV::PseudoSEXT_B:

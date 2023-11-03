@@ -2049,7 +2049,8 @@ void TargetLoweringBase::setMaximumJumpTableSize(unsigned Val) {
 }
 
 bool TargetLoweringBase::isJumpTableRelative() const {
-  return getTargetMachine().isPositionIndependent();
+  return getTargetMachine().isPositionIndependent() ||
+         getTargetMachine().getRelocationModel() == Reloc::EPIC;
 }
 
 Align TargetLoweringBase::getPrefLoopAlignment(MachineLoop *ML) const {
